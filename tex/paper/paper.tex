@@ -1,0 +1,176 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+%\documentclass[12pt,a4paper]{memoir} % for a long document
+\documentclass[12pt,a4paper,article]{memoir} % for a short document
+
+\usepackage[utf8]{inputenc} % set input encoding to utf8
+
+%%% PAGE DIMENSIONS
+% Set up the paper to be as close as possible to both A4 & letter:
+\settrimmedsize{11in}{210mm}{*} % letter = 11in tall; a4 = 210mm wide
+\setlength{\trimtop}{0pt}
+\setlength{\trimedge}{\stockwidth}
+\addtolength{\trimedge}{-\paperwidth}
+\settypeblocksize{*}{\lxvchars}{1.618} % we want to the text block to have golden proportionals
+\setulmargins{50pt}{*}{*} % 50pt upper margins
+\setlrmargins{*}{*}{1.618} % golden ratio again for left/right margins
+\setheaderspaces{*}{*}{1.618}
+\checkandfixthelayout 
+\usepackage{enumitem}
+\setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+\usepackage{xcolor,listings}
+\usepackage{textcomp}
+\lstset{upquote=true}
+\usepackage{graphicx}
+
+%%% \maketitle CUSTOMISATION
+% For more than trivial changes, you may as well do it yourself in a titlepage environment
+\pretitle{\begin{center}\sffamily\huge\MakeUppercase}
+\posttitle{\par\end{center}\vskip 0.5em}
+
+%%% ToC (table of contents) APPEARANCE
+\maxtocdepth{subsection} % include subsections
+\renewcommand{\cftchapterpagefont}{}
+\renewcommand{\cftchapterfont}{}     % no bold!
+
+%%% HEADERS & FOOTERS
+\pagestyle{ruled} % try also: empty , plain , headings , ruled , Ruled , companion
+
+%%% CHAPTERS
+\chapterstyle{hangnum} % try also: default , section , hangnum , companion , article, demo
+
+\renewcommand{\chaptitlefont}{\Huge\sffamily\raggedright} % set sans serif chapter title font
+\renewcommand{\chapnumfont}{\Huge\sffamily\raggedright} % set sans serif chapter number font
+
+%%% SECTIONS
+\hangsecnum % hang the section numbers into the margin to match \chapterstyle{hangnum}
+\maxsecnumdepth{subsection} % number subsections
+
+\setsecheadstyle{\Large\sffamily\raggedright} % set sans serif section font
+\setsubsecheadstyle{\large\sffamily\raggedright} % set sans serif subsection font
+
+\newlength\drop
+\makeatletter
+\newcommand*\titleM{\begingroup%
+\setlength\drop{0.08\textheight}
+\centering
+\vspace*{\drop}
+{\Huge\bfseries Technical Interview}\\[\baselineskip]
+%{\scshape MAN-AHL}\\[\baselineskip]
+\vfill
+\includegraphics[width=0.5\textwidth]{img/logo.png}\par\vspace{1cm}
+\vfill
+{\large\scshape Fadil Mokhchane}\par
+\vfill
+{\scshape \@date}\par
+\vspace*{2\drop}
+\endgroup}
+\makeatother
+%% END Memoir customization
+
+\title{Technical Interview}
+\author{Fadil Mokhchane}
+%\date{ August 2017} % Delete this line to display the current date
+%%% BEGIN DOCUMENT
+\begin{document}
+
+
+\begin{titlingpage}
+\titleM
+\end{titlingpage}
+
+\newpage
+\tableofcontents* % the asterisk means that the contents itself isn't put into the ToC
+%\clearpage %or \cleardoublepage
+\phantomsection
+%\listoffigures
+%\listoftables
+\newpage
+
+\chapter{Algorithm}
+\section{Question}
+Implement the method nextNum() and a minimal but effective set of unit tests. 
+Implement in the language of your choice, Python is preferred, but Java and 
+other languages are completely fine. 
+Make sure your code is exemplary, as if it was going to be shipped as part of a production system.
+
+As a quick check, given Random Numbers are $[-1, 0, 1, 2, 3]$ and 
+Probabilities are $[0.01, 0.3, 0.58, 0.1, 0.01]$ if we call nextNum() 100 times 
+we may get the following results. As the results are random, these particular results are unlikely.
+\begin{itemize}
+	\item -1: 1 times 
+	\item 0: 22 times
+	\item 1: 57 times 
+	\item 2: 20 times
+	\item 3: 0 times 
+\end{itemize}
+
+\chapter{SQL}
+\section{Question}
+Given the following tables
+\begin{lstlisting}[
+           language=SQL,
+           showspaces=false,
+           basicstyle=\ttfamily,
+           numbers=left,
+           numberstyle=\tiny,
+           commentstyle=\color{gray}
+        ]
+CREATE TABLE Product
+(
+product_id number primary key,
+name varchar2(128 byte) not null,
+rrp number not null,
+available_from date not null
+);
+CREATE TABLE Orders
+(
+order_id number primary key,
+product_id number not null,
+quantity number not null,
+order_price number not null,
+dispatch_date date not null,
+foreign key (product_id) references Product(product_id)
+);
+\end{lstlisting}
+Write an sql query to find books that have sold fewer than 10 copies in the last year, 
+excluding books that have been available for less than 1 month.
+
+Some example data, intended to give an idea of the sort of data that might exist, 
+can be found below. Note that the data is not complete, 
+nor does it necessarily cover all the cases that might be encountered.
+
+\begin{center}
+    \begin{tabular}{| l | l | l | l |}
+    \hline
+	product\_id & name & rrp & available\_from \\
+	\hline 
+	101 & Bayesian Methods for ...& 94.95 & (last thursday) \\
+	102 & (next year) in Review (preorder) & 21.95 & (next year) \\
+	103 & Learn Python in Ten Minutes & 2.15 & (three months ago) \\
+	104 & sports almanac (1999-2049) & 3.38 & (2 years ago) \\
+	105 & finance for dummies & 84.99 & (1 year ago)  \\
+	\hline
+    \end{tabular}
+\end{center}
+\begin{center}
+    \begin{tabular}{| l | l | l | l | l |}
+    \hline
+	order\_id & product\_id & quantity & order\_price & dispatch\_date \\
+	\hline 
+	1000 & 101 & 1 & 90.00 & (two months ago) \\
+	1001 & 103 & 1 & 1.15 & (40 days ago) \\
+	1002 & 101 & 10 & 90.00 & (11 months ago) \\
+	1003 & 104 & 11 & 3.38 & (6 months ago) \\
+	1004 & 105 & 11 & 501.33 & (two years ago) \\
+	\hline
+    \end{tabular}
+\end{center}
+
+%\newpage
+%\appendix
+%\addcontentsline{toc}{chapter}{Appendices}
+%\chapter{Installing the App}
+
+\end{document}
