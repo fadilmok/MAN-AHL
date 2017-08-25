@@ -1,4 +1,4 @@
-module ManAhl.Run (
+module Main (
   main
 ) where
 
