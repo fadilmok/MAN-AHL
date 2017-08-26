@@ -8,13 +8,17 @@ module ManAhl.Core.Engine(
 
 import ManAhl.Core.Types
 import ManAhl.Core.Random
+import ManAhl.Core.Analytics
 
 mkEngine :: [(Int, Double)] -> Maybe UniformRNGType -> IO Engine
-mkEngine xs typ = return . Engine xs =<< mkUniformRNG typ
+mkEngine pdf typ = return . Engine (mkCdf $ PDF pdf) =<< mkUniformRNG typ
 
-nextNum :: Engine -> (Double, Engine)
-nextNum = undefined
+nextNum :: Engine -> (Maybe Int, Engine)
+nextNum (Engine xs rng) = let (x, r) = next rng in (inverseCdf xs x, Engine xs r)
 
-nextNums :: Engine -> Int -> ([Double], Engine)
-nextNums = undefined
+nextNums :: Engine -> Int -> ([Maybe Int], Engine)
+nextNums e@(Engine xs rng) n = (fst $ unzip rs, e')
+  where rs@((_,e'):_) = foldl go [] [1..n]
+        go [] _ = [nextNum e]
+        go (x@(_,r):xs) _ = nextNum r : x : xs
 
