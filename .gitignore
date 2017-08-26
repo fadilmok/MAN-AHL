@@ -1,0 +1,9 @@
+dist/
+tex/paper/img/.DS_Store
+tex/paper/paper.aux
+tex/paper/paper.lof
+tex/paper/paper.log
+tex/paper/paper.out
+tex/paper/paper.pdf
+tex/paper/paper.synctex.gz
+tex/paper/paper.toc
