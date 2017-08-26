@@ -3,7 +3,9 @@ module ManAhl.Core.Engine(
   mkEngine,
   -- * Generation
   nextNum,
-  nextNums
+  nextNums,
+  nextNum',
+  nextNums'
 ) where
 
 import ManAhl.Core.Types
@@ -21,4 +23,10 @@ nextNums e@(Engine xs rng) n = (fst $ unzip rs, e')
   where rs@((_,e'):_) = foldl go [] [1..n]
         go [] _ = [nextNum e]
         go (x@(_,r):xs) _ = nextNum r : x : xs
+
+nextNum' :: Engine -> Maybe Int
+nextNum' = fst . nextNum
+
+nextNums' :: Engine -> Int -> [Maybe Int]
+nextNums' e n = fst $ nextNums e n
 
