@@ -1,6 +1,8 @@
+{-# LANGUAGE TupleSections #-}
 module ManAhl.Core.Analytics(
   mkCdf,
-  inverseCdf
+  inverseCdf,
+  mkHistogram
 ) where
 
 import qualified Data.Map as Map
@@ -27,3 +29,5 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
+mkHistogram :: [Maybe Int] -> Map.Map (Maybe Int) Int
+mkHistogram = Map.fromListWith (+) . map (,1)
