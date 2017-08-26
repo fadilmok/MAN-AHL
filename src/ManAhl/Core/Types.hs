@@ -16,9 +16,9 @@ data UniformRNG
 data UniformRNGType = Ecuyer | Mersenne
 
 newtype PDF = PDF { unPDF :: [(Int, Double)] }
-  deriving Show
+  deriving (Show, Eq)
 newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
-  deriving Show
+  deriving (Show, Eq)
 
 data Engine = Engine{
     cdf    :: CDF

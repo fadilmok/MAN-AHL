@@ -5,12 +5,17 @@ module ManAhl.Core.Analytics(
   mkHistogram
 ) where
 
+import Data.Function (on)
+import Data.List
 import qualified Data.Map as Map
 import ManAhl.Core.Types
 
 mkCdf :: PDF -> CDF
-mkCdf (PDF xs) = CDF $ Map.fromAscList $ reverse $ check $ foldl go [] xs
+mkCdf (PDF xs) = CDF $ Map.fromAscList $ reverse $ check $ foldl go [] $ prepare xs
   where
+    prepare :: [(Int, Double)] -> [(Int, Double)]
+    prepare xs = filter (\(_, x) -> x /= 0) $
+      nubBy ((==) `on` snd) $ sortBy (compare `on` snd) xs
 
     go :: [(Double, Maybe Int)] -> (Int, Double) -> [(Double, Maybe Int)]
     go [] (x,p) = [(p, Just x)]
