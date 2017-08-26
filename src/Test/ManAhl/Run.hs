@@ -11,6 +11,6 @@ import Test.ManAhl.Core.Analytics
 main :: IO()
 main = do
   forM_ tests $
-    \ (s, t) -> printf "%-25s:" s >> t
+    \ (s, t) -> printf "%-35s:" s >> t
 
 
