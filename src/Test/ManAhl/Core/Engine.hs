@@ -24,10 +24,10 @@ propMkEngine :: PdfPillars -> Property
 propMkEngine pdfP = monadicIO $
   do
     e <- QC.run $ mkEngine pdfP $ Just Mersenne
-    let nexts = nextNums' e 10000
+    let nexts = nextNums' e 4000
         hist = mkHistogram nexts
-        pdf = unPDF $ mkPdf pdfP
+        pdf = Map.toList $ unPDF $ mkPdf pdfP
         res = Map.fromList $ hsStat hist
     assert $ all (==True) $
-      map (\(v, p) -> abs (res ! Just v - p) < 1e-2) pdf
+      map (\(v, p) -> abs (res ! Just v - p) < 0.04) pdf
 

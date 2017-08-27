@@ -22,7 +22,7 @@ testRandomRNG rng = do
   let vals = fst $ nexts rng 1000
       m = mean vals
       std = stdDev vals
-      x ~= y = abs (x - y) <= 1e-2
+      x ~= y = abs (x - y) <= 0.04
       res = m ~= 0.5 && std ~= 0.28
   putStrLn $ "Test " ++ if res then "Passed" else "Failed"
   return res

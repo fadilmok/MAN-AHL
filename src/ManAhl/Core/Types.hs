@@ -21,7 +21,7 @@ data UniformRNGType = Ecuyer | Mersenne
 type PdfPillars = [(Int, Double)]
 type CdfPillars = [(Double, Maybe Int)]
 
-newtype PDF = PDF { unPDF :: [(Int, Double)] }
+newtype PDF = PDF { unPDF :: Map Int Double }
   deriving (Show, Eq)
 newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
   deriving (Show, Eq)

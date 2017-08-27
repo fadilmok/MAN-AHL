@@ -12,18 +12,17 @@ import qualified Data.Map as Map
 import ManAhl.Core.Types
 
 mkPdf :: PdfPillars -> PDF
-mkPdf xs = PDF $ prepare xs
-  where
-    prepare :: PdfPillars -> PdfPillars
-    prepare xs = filter (\(_, x) -> x /= 0) $
-      nubBy ((==) `on` snd) $ sortBy (compare `on` snd) xs
+mkPdf xs = PDF $
+  foldl (\ m (v, p) -> if p == 0 then m else Map.insertWith (+) v p m)
+    Map.empty xs
 
 mkCdf :: PDF -> CDF
-mkCdf (PDF xs) = CDF $ Map.fromAscList $ reverse $ check $ foldl go [] xs
+mkCdf (PDF m) = CDF $
+    Map.fromAscList $ reverse $ check $ Map.foldlWithKey go [] m
   where
-    go :: CdfPillars -> (Int, Double) -> CdfPillars
-    go [] (x,p) = [(p, Just x)]
-    go (y:ys) x = (snd x + fst y, Just $ fst x) : y : ys
+    go :: CdfPillars -> Int -> Double -> CdfPillars
+    go [] x p = [(p, Just x)]
+    go (y:ys) x p = (p + fst y, Just x) : y : ys
 
     check :: CdfPillars -> CdfPillars
     check [] = [(1, Nothing)]
