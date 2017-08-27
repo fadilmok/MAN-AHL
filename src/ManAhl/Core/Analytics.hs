@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections, RecordWildCards #-}
 module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
@@ -37,5 +37,9 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
-mkHistogram :: [Maybe Int] -> [(Maybe Int, Int)]
-mkHistogram = Map.toList . Map.fromListWith (+) . map (,1)
+mkHistogram :: [Maybe Int] -> Histogram
+mkHistogram xs = Histogram{..}
+  where
+    hsRaw = Map.toList . Map.fromListWith (+) . map (,1) $ xs
+    hsTotalCount = sum $ snd $ unzip hsRaw
+    hsStat = map (\(i, x) -> (i, fromIntegral x / fromIntegral hsTotalCount)) hsRaw

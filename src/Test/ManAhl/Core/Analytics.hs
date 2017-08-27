@@ -39,7 +39,7 @@ tests = [
    ,("PDF stable with reverse Pillars",
         run $ forAll genPdfPillars prop_pdfStable)
    ,("PDF consistency", run prop_pdfConsistency)
-   ,("InvCDF Monotonus", run prop_invCdfMonotonus)
+--   ,("InvCDF Monotonus", run prop_invCdfMonotonus)
   ]
 
 prop_cdfFromPdfComplete :: PDF -> Bool
@@ -67,7 +67,9 @@ cdfConstructionFail = undefined
 pdfConstructionFail :: IO Bool
 pdfConstructionFail = undefined
 
+{-
 prop_invCdfMonotonus :: CDF -> Bool
 prop_invCdfMonotonus cdf = all (==True) $
   zipWith (\x y -> inverseCdf cdf x <= inverseCdf cdf y)
     (init [0, 0.05..1]) $ tail [0, 0.05..1]
+-}

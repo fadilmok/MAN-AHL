@@ -4,7 +4,8 @@ module ManAhl.Core.Types(
   UniformRNG(..),
   CDF(..), PDF(..),
   PdfPillars,
-  CdfPillars
+  CdfPillars,
+  Histogram(..)
 ) where
 
 import Data.Map
@@ -29,3 +30,9 @@ data Engine = Engine{
     cdf    :: CDF
    ,uniformRng :: UniformRNG
   }
+
+data Histogram = Histogram {
+    hsRaw :: [(Maybe Int, Int)]
+   ,hsStat :: [(Maybe Int, Double)]
+   ,hsTotalCount :: Int
+  } deriving Show
