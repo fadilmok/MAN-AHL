@@ -3,14 +3,19 @@ module Test.ManAhl.Run (
 ) where
 
 import Control.Monad
+import System.Exit (exitFailure)
 import Text.Printf
 import Test.QuickCheck
 
-import Test.ManAhl.Core.Analytics
+import qualified Test.ManAhl.Core.Analytics as Analytics
 
 main :: IO()
 main = do
-  forM_ tests $
-    \ (s, t) -> printf "%-35s:" s >> t
+  success <- forM (
+      Analytics.tests
+    ) $ \ (s, t) -> printf "%-35s:" s >> t
+
+  unless (all (== True) success)
+    exitFailure
 
 

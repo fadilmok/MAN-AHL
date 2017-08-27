@@ -11,6 +11,7 @@ import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Test.QuickCheck
+import Test.QuickCheck.Test (isSuccess)
 
 instance Arbitrary PDF where
   arbitrary = mkPdf `liftM` genPdfPillars
@@ -36,10 +37,11 @@ genInvCdfQuery = do
   xs <- replicateM n $ choose(0, 1)
   return (pdf, xs)
 
-run :: Testable prop => prop -> IO()
-run p = quickCheckWith stdArgs{ maxSuccess = 10000 } p
+run :: Testable prop => prop -> IO Bool
+run p = fmap isSuccess $
+  quickCheckWithResult stdArgs{ maxSuccess = 10000 } p
 
-tests :: [( String, IO()) ]
+tests :: [(String, IO Bool) ]
 tests = [
     ("CDF Creation", run propCdfFromPdfComplete)
    ,("CDF and PDF pillars check", run propCdfPdfPillars)
@@ -70,12 +72,6 @@ propPdfStable pdfP = mkPdf pdfP == mkPdf ( reverse pdfP )
 propPdfConsistency :: PDF -> Bool
 propPdfConsistency (PDF pdfP) = sum (snd $ unzip pdfP) <= 1
 
-cdfConstructionFail :: IO Bool
-cdfConstructionFail = undefined
-
-pdfConstructionFail :: IO Bool
-pdfConstructionFail = undefined
-
 propMkHisto :: [Maybe Int] -> Bool
 propMkHisto xs = hsTotalCount hist == sum ( snd $ unzip $ hsRaw hist)
   where
@@ -87,3 +83,9 @@ propInvCdfValid (pdf, xs) = all (==True) $
   where
     cdf = mkCdf pdf
     set = Set.fromList $ Nothing : map Just (fst $ unzip $ unPDF pdf)
+
+cdfConstructionFail :: IO Bool
+cdfConstructionFail = undefined
+
+pdfConstructionFail :: IO Bool
+pdfConstructionFail = undefined
