@@ -11,7 +11,7 @@ import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Test.QuickCheck
-import Test.QuickCheck.Test (isSuccess)
+import Test.ManAhl.QuickCheck
 
 instance Arbitrary PDF where
   arbitrary = mkPdf `liftM` genPdfPillars
@@ -37,11 +37,7 @@ genInvCdfQuery = do
   xs <- replicateM n $ choose(0, 1)
   return (pdf, xs)
 
-run :: Testable prop => prop -> IO Bool
-run p = fmap isSuccess $
-  quickCheckWithResult stdArgs{ maxSuccess = 10000 } p
-
-tests :: [(String, IO Bool) ]
+tests :: [(String, IO Bool)]
 tests = [
     ("CDF Creation", run propCdfFromPdfComplete)
    ,("CDF and PDF pillars check", run propCdfPdfPillars)

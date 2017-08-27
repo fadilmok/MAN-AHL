@@ -8,14 +8,15 @@ import Text.Printf
 import Test.QuickCheck
 
 import qualified Test.ManAhl.Core.Analytics as Analytics
+import qualified Test.ManAhl.Core.Random as Random
 
 main :: IO()
 main = do
   success <- forM (
-      Analytics.tests
+      Analytics.tests ++
+      Random.tests
     ) $ \ (s, t) -> printf "%-35s:" s >> t
 
-  unless (all (== True) success)
+  unless (all (==True) success)
     exitFailure
-
 

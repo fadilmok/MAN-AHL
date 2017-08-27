@@ -2,7 +2,8 @@
 module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
-  mkHistogram
+  mkHistogram,
+  mean, stdDev
 ) where
 
 import Data.Function (on)
@@ -43,3 +44,11 @@ mkHistogram xs = Histogram{..}
     hsRaw = Map.toList . Map.fromListWith (+) . map (,1) $ xs
     hsTotalCount = length xs
     hsStat = map (\(i, x) -> (i, fromIntegral x / fromIntegral hsTotalCount)) hsRaw
+
+mean :: (Num a, Fractional a) => [a] -> a
+mean xs = sum xs / fromIntegral (length xs)
+
+stdDev :: (Num a, Floating a, Fractional a) => [a] -> a
+stdDev xs = sqrt $
+    ( sum $ map (\x -> (x - avg)^2) xs ) / fromIntegral ( length xs - 1 )
+  where avg = mean xs
