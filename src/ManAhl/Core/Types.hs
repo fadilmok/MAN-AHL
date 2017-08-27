@@ -27,7 +27,8 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
   deriving (Show, Eq)
 
 data Engine = Engine{
-    cdf    :: CDF
+    pdf    :: PDF
+   ,cdf    :: CDF
    ,uniformRng :: UniformRNG
   }
 

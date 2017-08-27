@@ -13,13 +13,21 @@ import ManAhl.Core.Random
 import ManAhl.Core.Analytics
 
 mkEngine :: PdfPillars -> Maybe UniformRNGType -> IO Engine
-mkEngine pdf typ = return . Engine (mkCdf $ mkPdf pdf) =<< mkUniformRNG typ
+mkEngine pdf typ = do
+  rng <- mkUniformRNG typ
+  let pdf' = mkPdf pdf
+  return Engine {
+        pdf = pdf'
+       ,cdf = mkCdf pdf'
+       ,uniformRng = rng
+    }
 
 nextNum :: Engine -> (Maybe Int, Engine)
-nextNum (Engine xs rng) = let (x, r) = next rng in (inverseCdf xs x, Engine xs r)
+nextNum (Engine p c rng) =
+  let (x, r) = next rng in (inverseCdf c x, Engine p c r)
 
 nextNums :: Engine -> Int -> ([Maybe Int], Engine)
-nextNums e@(Engine xs rng) n = (fst $ unzip rs, e')
+nextNums e@(Engine _ _ rng) n = (fst $ unzip rs, e')
   where rs@((_,e'):_) = foldl go [] [1..n]
         go [] _ = [nextNum e]
         go (x@(_,r):xs) _ = nextNum r : x : xs
