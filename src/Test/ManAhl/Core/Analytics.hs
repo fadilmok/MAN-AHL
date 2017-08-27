@@ -4,13 +4,13 @@ module Test.ManAhl.Core.Analytics(
 
 import ManAhl.Core.Analytics
 import ManAhl.Core.Types
-import Test.QuickCheck
 import Control.Monad
 import Data.Foldable
 import Data.List
 import Data.Maybe
-import qualified Data.Set as Set
 import qualified Data.Map as Map
+import qualified Data.Set as Set
+import Test.QuickCheck
 
 instance Arbitrary PDF where
   arbitrary = mkPdf `liftM` genPdfPillars
@@ -29,6 +29,13 @@ genPdfPillars = do
       )
       $ \xs -> let s = sum (snd $ unzip xs) in s > 0 && s <= 1
 
+genInvCdfQuery :: Gen (PDF, [Double])
+genInvCdfQuery = do
+  pdf <- arbitrary
+  n <- choose (1, 1000)
+  xs <- replicateM n $ choose(0, 1)
+  return (pdf, xs)
+
 run :: Testable prop => prop -> IO()
 run p = quickCheckWith stdArgs{ maxSuccess = 10000 } p
 
@@ -40,7 +47,8 @@ tests = [
         run $ forAll genPdfPillars propPdfStable)
    ,("PDF consistency", run propPdfConsistency)
    ,("Histo creation", run propMkHisto)
---   ,("InvCDF Monotonus", run prop_invCdfMonotonus)
+   ,("InvCDF valid",
+        run $ forAll genInvCdfQuery propInvCdfValid)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -72,9 +80,10 @@ propMkHisto :: [Maybe Int] -> Bool
 propMkHisto xs = hsTotalCount hist == sum ( snd $ unzip $ hsRaw hist)
   where
     hist = mkHistogram xs
-{-
-prop_invCdfMonotonus :: CDF -> Bool
-prop_invCdfMonotonus cdf = all (==True) $
-  zipWith (\x y -> inverseCdf cdf x <= inverseCdf cdf y)
-    (init [0, 0.05..1]) $ tail [0, 0.05..1]
--}
+
+propInvCdfValid :: (PDF, [Double]) -> Bool
+propInvCdfValid (pdf, xs) = all (==True) $
+    map (\ x -> inverseCdf cdf x `Set.member` set) xs
+  where
+    cdf = mkCdf pdf
+    set = Set.fromList $ Nothing : map Just (fst $ unzip $ unPDF pdf)
