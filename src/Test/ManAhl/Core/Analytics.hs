@@ -1,5 +1,6 @@
 module Test.ManAhl.Core.Analytics(
-  tests
+  tests,
+  genPdfPillars
 ) where
 
 import ManAhl.Core.Analytics

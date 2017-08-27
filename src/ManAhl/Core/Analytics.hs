@@ -50,5 +50,5 @@ mean xs = sum xs / fromIntegral (length xs)
 
 stdDev :: (Num a, Floating a, Fractional a) => [a] -> a
 stdDev xs = sqrt $
-    ( sum $ map (\x -> (x - avg)^2) xs ) / fromIntegral ( length xs - 1 )
+    ( sum $ map (\x -> (x - avg)^2) xs ) / fromIntegral ( length xs )
   where avg = mean xs
