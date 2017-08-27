@@ -2,7 +2,9 @@ module ManAhl.Core.Types(
   Engine(..),
   UniformRNGType(..),
   UniformRNG(..),
-  CDF(..), PDF(..)
+  CDF(..), PDF(..),
+  PdfPillars,
+  CdfPillars
 ) where
 
 import Data.Map
@@ -14,6 +16,9 @@ data UniformRNG
   | RandomMersenne Mersenne.PureMT
 
 data UniformRNGType = Ecuyer | Mersenne
+
+type PdfPillars = [(Int, Double)]
+type CdfPillars = [(Double, Maybe Int)]
 
 newtype PDF = PDF { unPDF :: [(Int, Double)] }
   deriving (Show, Eq)

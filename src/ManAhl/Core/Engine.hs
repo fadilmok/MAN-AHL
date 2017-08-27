@@ -12,8 +12,8 @@ import ManAhl.Core.Types
 import ManAhl.Core.Random
 import ManAhl.Core.Analytics
 
-mkEngine :: [(Int, Double)] -> Maybe UniformRNGType -> IO Engine
-mkEngine pdf typ = return . Engine (mkCdf $ PDF pdf) =<< mkUniformRNG typ
+mkEngine :: PdfPillars -> Maybe UniformRNGType -> IO Engine
+mkEngine pdf typ = return . Engine (mkCdf $ mkPdf pdf) =<< mkUniformRNG typ
 
 nextNum :: Engine -> (Maybe Int, Engine)
 nextNum (Engine xs rng) = let (x, r) = next rng in (inverseCdf xs x, Engine xs r)

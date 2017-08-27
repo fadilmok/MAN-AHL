@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 module ManAhl.Core.Analytics(
-  mkCdf,
+  mkPdf, mkCdf,
   inverseCdf,
   mkHistogram
 ) where
@@ -10,18 +10,21 @@ import Data.List
 import qualified Data.Map as Map
 import ManAhl.Core.Types
 
-mkCdf :: PDF -> CDF
-mkCdf (PDF xs) = CDF $ Map.fromAscList $ reverse $ check $ foldl go [] $ prepare xs
+mkPdf :: PdfPillars -> PDF
+mkPdf xs = PDF $ prepare xs
   where
-    prepare :: [(Int, Double)] -> [(Int, Double)]
+    prepare :: PdfPillars -> PdfPillars
     prepare xs = filter (\(_, x) -> x /= 0) $
       nubBy ((==) `on` snd) $ sortBy (compare `on` snd) xs
 
-    go :: [(Double, Maybe Int)] -> (Int, Double) -> [(Double, Maybe Int)]
+mkCdf :: PDF -> CDF
+mkCdf (PDF xs) = CDF $ Map.fromAscList $ reverse $ check $ foldl go [] xs
+  where
+    go :: CdfPillars -> (Int, Double) -> CdfPillars
     go [] (x,p) = [(p, Just x)]
     go (y:ys) x = (snd x + fst y, Just $ fst x) : y : ys
 
-    check :: [(Double, Maybe Int)] -> [(Double, Maybe Int)]
+    check :: CdfPillars -> CdfPillars
     check [] = [(1, Nothing)]
     check vals@((p, _):xs)
       | p < 1 = (1, Nothing) : vals
@@ -34,5 +37,5 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
-mkHistogram :: [Maybe Int] -> Map.Map (Maybe Int) Int
-mkHistogram = Map.fromListWith (+) . map (,1)
+mkHistogram :: [Maybe Int] -> [(Maybe Int, Int)]
+mkHistogram = Map.toList . Map.fromListWith (+) . map (,1)
