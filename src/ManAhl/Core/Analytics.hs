@@ -41,5 +41,5 @@ mkHistogram :: [Maybe Int] -> Histogram
 mkHistogram xs = Histogram{..}
   where
     hsRaw = Map.toList . Map.fromListWith (+) . map (,1) $ xs
-    hsTotalCount = sum $ snd $ unzip hsRaw
+    hsTotalCount = length xs
     hsStat = map (\(i, x) -> (i, fromIntegral x / fromIntegral hsTotalCount)) hsRaw

@@ -34,32 +34,33 @@ run p = quickCheckWith stdArgs{ maxSuccess = 10000 } p
 
 tests :: [( String, IO()) ]
 tests = [
-    ("CDF Creation", run prop_cdfFromPdfComplete)
-   ,("CDF and PDF pillars check", run prop_cdfPdfPillars)
+    ("CDF Creation", run propCdfFromPdfComplete)
+   ,("CDF and PDF pillars check", run propCdfPdfPillars)
    ,("PDF stable with reverse Pillars",
-        run $ forAll genPdfPillars prop_pdfStable)
-   ,("PDF consistency", run prop_pdfConsistency)
+        run $ forAll genPdfPillars propPdfStable)
+   ,("PDF consistency", run propPdfConsistency)
+   ,("Histo creation", run propMkHisto)
 --   ,("InvCDF Monotonus", run prop_invCdfMonotonus)
   ]
 
-prop_cdfFromPdfComplete :: PDF -> Bool
-prop_cdfFromPdfComplete pdf = fst (last pillarsCdf) == 1
+propCdfFromPdfComplete :: PDF -> Bool
+propCdfFromPdfComplete pdf = fst (last pillarsCdf) == 1
   where
     cdf = mkCdf pdf
     pillarsCdf = Map.toList $ unCDF cdf
 
-prop_cdfPdfPillars :: PDF -> Bool
-prop_cdfPdfPillars pdf =
+propCdfPdfPillars :: PDF -> Bool
+propCdfPdfPillars pdf =
     nCdfPillars == nPdfPillars || nCdfPillars == nPdfPillars + 1
   where
     nCdfPillars = Map.size $ unCDF $ mkCdf pdf
     nPdfPillars = length $ unPDF pdf
 
-prop_pdfStable :: PdfPillars -> Bool
-prop_pdfStable pdfP = mkPdf pdfP == mkPdf ( reverse pdfP )
+propPdfStable :: PdfPillars -> Bool
+propPdfStable pdfP = mkPdf pdfP == mkPdf ( reverse pdfP )
 
-prop_pdfConsistency :: PDF -> Bool
-prop_pdfConsistency (PDF pdfP) = sum (snd $ unzip pdfP) <= 1
+propPdfConsistency :: PDF -> Bool
+propPdfConsistency (PDF pdfP) = sum (snd $ unzip pdfP) <= 1
 
 cdfConstructionFail :: IO Bool
 cdfConstructionFail = undefined
@@ -67,6 +68,10 @@ cdfConstructionFail = undefined
 pdfConstructionFail :: IO Bool
 pdfConstructionFail = undefined
 
+propMkHisto :: [Maybe Int] -> Bool
+propMkHisto xs = hsTotalCount hist == sum ( snd $ unzip $ hsRaw hist)
+  where
+    hist = mkHistogram xs
 {-
 prop_invCdfMonotonus :: CDF -> Bool
 prop_invCdfMonotonus cdf = all (==True) $
