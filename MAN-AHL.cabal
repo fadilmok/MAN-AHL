@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 
 executable MAN-AHL
   main-is:             ManAhl/Run.hs
-  ghc-options:         -main-is ManAhl.Run.main
+  ghc-options:         -O2 -main-is ManAhl.Run.main
   -- other-modules:       
   -- other-extensions:    
   build-depends: 
@@ -32,7 +32,7 @@ executable MAN-AHL
 
 Test-Suite MAN-AHL-Test
   main-is:             Test/ManAhl/Run.hs
-  ghc-options:         -main-is Test.ManAhl.Run
+  ghc-options:         -O2 -main-is Test.ManAhl.Run
   -- other-modules:       
   -- other-extensions:    
   build-depends:
