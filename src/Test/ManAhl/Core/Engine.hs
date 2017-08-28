@@ -17,14 +17,16 @@ import Data.Map ((!))
 tests :: [(String, IO Bool)]
 tests = [
     ("Engine test - Mersene",
-      Test.run $ forAll genPdfPillars propMkEngine)
+        Test.run $ forAll genPdfPillars $ propMkEngine Mersenne)
+   ,("Engine test - Ecuyer",
+        Test.run $ forAll genPdfPillars $ propMkEngine Ecuyer)
   ]
 
-propMkEngine :: PdfPillars -> Property
-propMkEngine pdfP = monadicIO $
+propMkEngine :: UniformRNGType -> PdfPillars -> Property
+propMkEngine rT pdfP = monadicIO $
   do
-    e <- QC.run $ mkEngine pdfP $ Just Mersenne
-    let nexts = nextNums' e 4000
+    e <- QC.run $ mkEngine pdfP $ Just rT
+    let nexts = nextNums' e nTests
         hist = mkHistogram nexts
         pdf = Map.toList $ unPDF $ mkPdf pdfP
         res = Map.fromList $ hsStat hist
