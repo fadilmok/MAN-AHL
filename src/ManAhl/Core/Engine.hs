@@ -14,15 +14,18 @@ import ManAhl.Core.Analytics
 
 import Control.Monad.State
 
-mkEngine :: PdfPillars -> Maybe UniformRNGType -> IO Engine
+mkEngine :: PdfPillars -> Maybe UniformRNGType -> IO (Either String Engine)
 mkEngine pdf typ = do
   rng <- mkUniformRNG typ
   let pdf' = mkPdf pdf
-  return Engine {
-        pdf = pdf'
-       ,cdf = mkCdf pdf'
+  return $
+    either
+      (\ msg -> Left msg)
+      (\ p -> Right Engine {
+        pdf = p
+       ,cdf = mkCdf p
        ,seed = rng
-    }
+      }) pdf'
 
 nextNum :: State Engine (Maybe Int)
 nextNum = do

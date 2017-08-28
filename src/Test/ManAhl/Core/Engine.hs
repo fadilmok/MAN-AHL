@@ -25,11 +25,12 @@ tests = [
 propMkEngine :: UniformRNGType -> PdfPillars -> Property
 propMkEngine rT pdfP = monadicIO $
   do
-    e <- QC.run $ mkEngine pdfP $ Just rT
-    let nexts = nextNums' e nTests
+    e' <- QC.run $ mkEngine pdfP $ Just rT
+    let e = case e' of Left s -> error s; Right x -> x
+        nexts = nextNums' e 5000
         hist = mkHistogram nexts
-        pdf = Map.toList $ unPDF $ mkPdf pdfP
+        pdf' = Map.toList $ unPDF $ pdf e
         res = Map.fromList $ hsStat hist
     assert $ all (==True) $
-      map (\(v, p) -> abs (res ! Just v - p) < 0.04) pdf
+      map (\(v, p) -> abs (res ! Just v - p) < 0.04) pdf'
 

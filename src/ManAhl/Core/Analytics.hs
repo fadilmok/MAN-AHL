@@ -11,10 +11,15 @@ import Data.List
 import qualified Data.Map as Map
 import ManAhl.Core.Types
 
-mkPdf :: PdfPillars -> PDF
-mkPdf xs = PDF $
-  foldl (\ m (v, p) -> if p == 0 then m else Map.insertWith (+) v p m)
-    Map.empty xs
+mkPdf :: PdfPillars -> Either String PDF
+mkPdf xs
+  | foldl (\ acc (_, x) -> if acc then acc else x < 0) False xs =
+      Left "PDF Pillars contain negative values."
+  | foldl (\ acc (_, x) -> acc + x) 0 xs > 1 =
+      Left "The sum of PDF probabilities are greater than 1."
+  | otherwise = Right $ PDF $
+      foldl (\ m (v, p) -> if p == 0 then m else Map.insertWith (+) v p m)
+        Map.empty xs
 
 mkCdf :: PDF -> CDF
 mkCdf (PDF m) = CDF $
@@ -45,9 +50,11 @@ mkHistogram xs = Histogram{..}
     hsStat = map (\(i, x) -> (i, fromIntegral x / fromIntegral hsTotalCount)) hsRaw
 
 mean :: (Num a, Fractional a) => [a] -> a
+mean [] = error "The input list is empty"
 mean xs = sum xs / fromIntegral (length xs)
 
 stdDev :: (Num a, Floating a, Fractional a) => [a] -> a
+stdDev [] = error "The input list is empty"
 stdDev xs = sqrt $
     ( sum $ map (\x -> (x - avg)^2) xs ) / fromIntegral ( length xs )
   where avg = mean xs

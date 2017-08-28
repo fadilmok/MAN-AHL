@@ -15,7 +15,12 @@ import Test.QuickCheck
 import Test.ManAhl.QuickCheck
 
 instance Arbitrary PDF where
-  arbitrary = mkPdf `liftM` genPdfPillars
+  arbitrary = do
+      pillars <- genPdfPillars
+      let pdf = mkPdf pillars
+      return $ case pdf of
+        Left s -> error $ "Generation failed " ++ s
+        Right p -> p
 
 instance Arbitrary CDF where
   arbitrary = mkCdf `liftM` arbitrary
