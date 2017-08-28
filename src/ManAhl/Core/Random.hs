@@ -20,7 +20,10 @@ mkUniformRNG Nothing         = mkUniformRNG $ Just Mersenne
 instance RandomGen UniformRNG where
   next (RandomEcuyer rng)   = let (x, r) = next rng in (x, RandomEcuyer r)
   next (RandomMersenne rng) = let (x, r) = next rng in (x, RandomMersenne r)
-  split = undefined
+  genRange (RandomEcuyer rng)   = genRange rng
+  genRange (RandomMersenne rng) = genRange rng
+  split (RandomEcuyer rng)   = let (g1, g2) = split rng in (RandomEcuyer g1, RandomEcuyer g1)
+  split (RandomMersenne rng) = let (g1, g2) = split rng in (RandomMersenne g1, RandomMersenne g2)
 
 next' :: State UniformRNG Double
 next' = state $ randomR (0, 1)

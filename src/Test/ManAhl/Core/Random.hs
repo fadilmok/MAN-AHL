@@ -11,8 +11,8 @@ import ManAhl.Core.Analytics
 
 tests :: [(String, IO Bool)]
 tests = [
-    ("Mersenne Mean And Std", testRandomRNG Mersenne)
-   ,("Ecuyer Mean and Std",   testRandomRNG Ecuyer)
+    ("Ecuyer Mean and Std",   testRandomRNG Ecuyer)
+   ,("Mersenne Mean And Std", testRandomRNG Mersenne)
   ]
 
 
@@ -24,5 +24,6 @@ testRandomRNG rng = do
       std = stdDev vals
       x ~= y = abs (x - y) <= 0.04
       res = m ~= 0.5 && std ~= 0.28
-  putStrLn $ "Test " ++ if res then "Passed" else "Failed"
+--  putStr $ "Mean: " ++ show m ++ " Std: " ++ show std ++ " ->"
+  putStrLn $ " Test " ++ if res then "Passed" else "FAILED"
   return res
