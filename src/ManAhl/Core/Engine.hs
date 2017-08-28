@@ -32,7 +32,12 @@ nextNum = do
   return $ inverseCdf cdf x
 
 nextNums :: Int -> State Engine [Maybe Int]
-nextNums n = replicateM n nextNum
+nextNums n = do
+  Engine pdf cdf seed <- get
+  let (xs, r) = runState (nexts' n) seed
+  put $ Engine pdf cdf r
+  return $
+    map (inverseCdf cdf) xs
 
 nextNum' :: Engine -> Maybe Int
 nextNum' e = evalState nextNum e
