@@ -13,6 +13,7 @@ import ManAhl.Core.Types
 
 mkPdf :: PdfPillars -> Either String PDF
 mkPdf xs
+  | null xs = Left "The pdf pillars are empty."
   | foldl (\ acc (_, x) -> if acc then acc else x < 0) False xs =
       Left "PDF Pillars contain negative values."
   | foldl (\ acc (_, x) -> acc + x) 0 xs > 1 =
@@ -45,9 +46,9 @@ inverseCdf (CDF m) n
 mkHistogram :: [Maybe Int] -> Histogram
 mkHistogram xs = Histogram{..}
   where
-    hsRaw = Map.toList . Map.fromListWith (+) . map (,1) $ xs
-    hsTotalCount = length xs
-    hsStat = map (\(i, x) -> (i, fromIntegral x / fromIntegral hsTotalCount)) hsRaw
+    hsCount       = Map.fromListWith (+) . map (,1) $ xs
+    hsTotalCount  = length xs
+    hsStat        = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
 
 mean :: (Num a, Fractional a) => [a] -> a
 mean [] = error "The input list is empty"

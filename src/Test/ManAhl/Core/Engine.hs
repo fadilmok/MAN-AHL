@@ -31,7 +31,7 @@ propWeightedProba rT pdfP = monadicIO $
         nexts = nextNums' e $ 1000000
         hist = mkHistogram nexts
         pdf' = unPDF $ pdf e
-        stat = Map.fromList $ hsStat hist
+        stat = hsStat hist
         diff = Map.mapWithKey (\ v p -> abs (stat ! Just v - p)) pdf'
         res = Map.foldl (\ acc v -> if not acc then False else v <= 0.005 ) True diff
     unless res $

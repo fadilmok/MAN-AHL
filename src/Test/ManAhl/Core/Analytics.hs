@@ -6,6 +6,7 @@ module Test.ManAhl.Core.Analytics(
 import ManAhl.Core.Analytics
 import ManAhl.Core.Types
 import Control.Monad
+import Data.Either
 import Data.Foldable
 import Data.List
 import Data.Maybe
@@ -45,14 +46,15 @@ genInvCdfQuery = do
 
 tests :: [(String, IO Bool)]
 tests = [
-    ("CDF Creation", run propCdfFromPdfComplete)
+    ("CDF Creation",              run propCdfFromPdfComplete)
    ,("CDF and PDF pillars check", run propCdfPdfPillars)
    ,("PDF stable with reverse Pillars",
         run $ forAll genPdfPillars propPdfStable)
-   ,("PDF consistency", run propPdfConsistency)
-   ,("Histo creation", run propMkHisto)
+   ,("PDF consistency",           run propPdfConsistency)
+   ,("Histo creation",            run propMkHisto)
    ,("InvCDF valid",
         run $ forAll genInvCdfQuery propInvCdfValid)
+   ,("PDF Failure",               testPdfConstructionFail)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -72,10 +74,10 @@ propPdfStable :: PdfPillars -> Bool
 propPdfStable pdfP = mkPdf pdfP == mkPdf ( reverse pdfP )
 
 propPdfConsistency :: PDF -> Bool
-propPdfConsistency (PDF pdfP) = sum (snd $ unzip $ Map.toList pdfP) <= 1
+propPdfConsistency (PDF pdfP) = Map.foldl (\acc x -> x + acc) 0 pdfP <= 1
 
 propMkHisto :: [Maybe Int] -> Bool
-propMkHisto xs = hsTotalCount hist == sum ( snd $ unzip $ hsRaw hist)
+propMkHisto xs = hsTotalCount hist == (Map.foldl (\acc x -> x + acc) 0 $ hsCount hist)
   where
     hist = mkHistogram xs
 
@@ -86,8 +88,12 @@ propInvCdfValid (pdf, xs) = all (==True) $
     cdf = mkCdf pdf
     set = Set.fromList $ Nothing : map Just (fst $ unzip $ Map.toList $ unPDF pdf)
 
-cdfConstructionFail :: IO Bool
-cdfConstructionFail = undefined
+testPdfConstructionFail :: IO Bool
+testPdfConstructionFail = do
+  let negativePro = isLeft $ mkPdf [(1, -1)]
+      nullPro = isLeft $ mkPdf []
+      greaterPro = isLeft $ mkPdf [(1, 0.4), (2, 0.5), (3, 0.4)]
+      res = negativePro && nullPro && greaterPro
 
-pdfConstructionFail :: IO Bool
-pdfConstructionFail = undefined
+  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
+  return res

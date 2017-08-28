@@ -34,7 +34,7 @@ data Engine = Engine{
   }
 
 data Histogram = Histogram {
-    hsRaw :: [(Maybe Int, Int)]
-   ,hsStat :: [(Maybe Int, Double)]
-   ,hsTotalCount :: Int
+    hsCount       :: Map (Maybe Int) Int
+   ,hsStat        :: Map (Maybe Int) Double
+   ,hsTotalCount  :: Int
   } deriving Show
