@@ -8,6 +8,7 @@ module ManAhl.Core.Types(
   Histogram(..)
 ) where
 
+import Control.Monad.State
 import Data.Map
 import qualified System.Random as Ecuyer
 import qualified System.Random.Mersenne.Pure64 as Mersenne
@@ -27,9 +28,9 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
   deriving (Show, Eq)
 
 data Engine = Engine{
-    pdf    :: PDF
-   ,cdf    :: CDF
-   ,uniformRng :: UniformRNG
+    pdf  :: PDF
+   ,cdf  :: CDF
+   ,seed :: UniformRNG
   }
 
 data Histogram = Histogram {

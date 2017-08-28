@@ -12,6 +12,8 @@ import ManAhl.Core.Types
 import ManAhl.Core.Random
 import ManAhl.Core.Analytics
 
+import Control.Monad.State
+
 mkEngine :: PdfPillars -> Maybe UniformRNGType -> IO Engine
 mkEngine pdf typ = do
   rng <- mkUniformRNG typ
@@ -19,22 +21,22 @@ mkEngine pdf typ = do
   return Engine {
         pdf = pdf'
        ,cdf = mkCdf pdf'
-       ,uniformRng = rng
+       ,seed = rng
     }
 
-nextNum :: Engine -> (Maybe Int, Engine)
-nextNum (Engine p c rng) =
-  let (x, r) = next rng in (inverseCdf c x, Engine p c r)
+nextNum :: State Engine (Maybe Int)
+nextNum = do
+  Engine pdf cdf seed <- get
+  let (x, r) = runState next' seed
+  put $ Engine pdf cdf r
+  return $ inverseCdf cdf x
 
-nextNums :: Engine -> Int -> ([Maybe Int], Engine)
-nextNums e@(Engine _ _ rng) n = (fst $ unzip rs, e')
-  where rs@((_,e'):_) = foldl go [] [1..n]
-        go [] _ = [nextNum e]
-        go (x@(_,r):xs) _ = nextNum r : x : xs
+nextNums :: Int -> State Engine [Maybe Int]
+nextNums n = replicateM n nextNum
 
 nextNum' :: Engine -> Maybe Int
-nextNum' = fst . nextNum
+nextNum' e = evalState nextNum e
 
 nextNums' :: Engine -> Int -> [Maybe Int]
-nextNums' e n = fst $ nextNums e n
+nextNums' e n = evalState (nextNums n) e
 

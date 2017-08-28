@@ -21,7 +21,12 @@ executable MAN-AHL
   ghc-options:         -main-is ManAhl.Run.main
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, random >=1.1 && <1.2, mersenne-random-pure64 >=0.2 && <0.3, containers >=0.5.7.1
+  build-depends: 
+    base >=4.9 && <4.10, 
+    random >=1.1 && <1.2, 
+    mersenne-random-pure64 >=0.2 && <0.3, 
+    containers >=0.5.7.1, 
+    mtl >= 2.2.1
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -30,7 +35,13 @@ Test-Suite MAN-AHL-Test
   ghc-options:         -main-is Test.ManAhl.Run
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, random >=1.1 && <1.2, mersenne-random-pure64 >=0.2 && <0.3, containers >=0.5.7.1, QuickCheck >= 2.9.2
+  build-depends:
+    base >=4.9 && <4.10, 
+    random >=1.1 && <1.2, 
+    mersenne-random-pure64 >=0.2 && <0.3, 
+    containers >=0.5.7.1, 
+    mtl >= 2.2.1,
+    QuickCheck >= 2.9.2
   hs-source-dirs:      src 
   default-language:    Haskell2010
   type:                exitcode-stdio-1.0

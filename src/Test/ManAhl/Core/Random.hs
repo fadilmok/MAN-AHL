@@ -19,7 +19,7 @@ tests = [
 testRandomRNG :: UniformRNGType -> IO Bool
 testRandomRNG rng = do
   rng <- mkUniformRNG $ Just rng
-  let vals = fst $ nexts rng 1000
+  let vals = nextVals rng 1000
       m = mean vals
       std = stdDev vals
       x ~= y = abs (x - y) <= 0.04
