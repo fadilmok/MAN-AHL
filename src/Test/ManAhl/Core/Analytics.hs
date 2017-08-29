@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Test.ManAhl.Core.Analytics(
   tests,
   genPdfPillars
@@ -5,6 +6,7 @@ module Test.ManAhl.Core.Analytics(
 
 import ManAhl.Core.Analytics
 import ManAhl.Core.Types
+import Control.Exception
 import Control.Monad
 import Data.Either
 import Data.Foldable
@@ -55,6 +57,8 @@ tests = [
    ,("InvCDF valid",
         run $ forAll genInvCdfQuery propInvCdfValid)
    ,("PDF Failure",               testPdfConstructionFail)
+   ,("CDF Failure",               testCdfConstructionFail)
+   ,("Inverse CDF Failure",       testInvCdfFail)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -95,5 +99,31 @@ testPdfConstructionFail = do
       greaterPro = isLeft $ mkPdf [(1, 0.4), (2, 0.5), (3, 0.4)]
       res = negativePro && nullPro && greaterPro
 
+  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
+  return res
+
+testCdfConstructionFail :: IO Bool
+testCdfConstructionFail = do
+  let fakePdf = PDF $ Map.fromList [(1, 0.5), (2, 0.3), (3, 0.3)]
+  res' <- try ( do
+        let !c = mkCdf fakePdf
+        return False
+      )
+  let res = case (res' :: Either SomeException Bool) of
+              Left e -> True
+              Right _ -> False
+  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
+  return res
+
+testInvCdfFail :: IO Bool
+testInvCdfFail = do
+  let cdf = CDF $ Map.fromList [(0.5,Just 1), (0.8, Just 2), (1, Just 3)]
+  res' <- try ( do
+        let !c = inverseCdf cdf 1.1
+        return False
+      )
+  let res = case (res' :: Either SomeException Bool) of
+              Left e -> True
+              Right _ -> False
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res

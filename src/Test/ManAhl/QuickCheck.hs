@@ -7,7 +7,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 
 nTests :: Int
-nTests = 2000
+nTests = 1000
 
 nRand :: Int
 nRand = 100000
