@@ -67,6 +67,7 @@ tests = [
    ,("Mean Failure",              testMeanFail)
    ,("Std Failure",               testStdFail)
    ,("PDF No regression",         testPDFNoRegression)
+   ,("CDF No regression",         testCDFNoRegression)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -137,22 +138,36 @@ testStdFail =
     let !c = stdDev []
     return ()
 
-(~=) :: Double -> Double -> Bool
-x ~= y = abs ( x - y ) < 0.0001
-
-equalMap :: Ord a => Map.Map a Double -> Map.Map a Double -> Bool
-equalMap lhs rhs =
-  Map.foldl (\ acc x -> if not acc then False else x < 0.0001) True $
-    Map.unionWith (\ x y -> abs (x - y)) lhs rhs
-
 testPDFNoRegression :: IO Bool
 testPDFNoRegression = do
-  let pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+  let equal :: Ord a => Map.Map a Double -> Map.Map a Double -> Bool
+      equal lhs rhs =
+          Map.foldl (\ acc x -> if not acc then False else x < 0.0001) True $
+              Map.unionWith (\ x y -> abs (x - y)) lhs rhs
+
+      pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
       res  = mkPdf pdfP
       test = case res of
               Left _ -> False
               Right pdf ->
-                unPDF pdf `equalMap` (Map.fromList [(1, 0.3), (2, 0.4), (3, 0.3)])
+                unPDF pdf `equal` (Map.fromList [(1, 0.3), (2, 0.4), (3, 0.3)])
+  putStrLn $ "Test " ++ if test then "Passed" else "FAILED"
+  return test
+
+testCDFNoRegression :: IO Bool
+testCDFNoRegression = do
+  let equal :: CdfPillars -> CdfPillars -> Bool
+      equal lhs rhs
+        | length lhs /= length rhs = False
+        | otherwise = all (==True) $
+              zipWith (\ (p1, v1) (p2, v2) -> abs (p1 - p2) < 0.0001 && v1 == v2) lhs rhs
+      pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      res  = mkPdf pdfP
+      test = case res of
+              Left _ -> False
+              Right pdf ->
+                Map.toList (unCDF $ mkCdf pdf)
+                    `equal` [(0.3, Just 1), (0.7, Just 2), (1, Just 3)]
   putStrLn $ "Test " ++ if test then "Passed" else "FAILED"
   return test
 
