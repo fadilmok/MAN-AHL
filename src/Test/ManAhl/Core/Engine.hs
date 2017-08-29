@@ -12,6 +12,7 @@ import ManAhl.Core.Engine
 import ManAhl.Core.Analytics
 
 import Control.Monad
+import Data.Either
 import qualified Data.Map as Map
 import Data.Map ((!))
 
@@ -21,6 +22,8 @@ tests = [
         Test.runWith 10 $ forAll genPdfPillars $ propWeightedProba Mersenne)
    ,("Engine test - Ecuyer",
         Test.runWith 10 $ forAll genPdfPillars $ propWeightedProba Ecuyer)
+   ,("Engine fail",
+        testEngineFail)
   ]
 
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
@@ -37,3 +40,15 @@ propWeightedProba rT pdfP = monadicIO $
     unless res $
       QC.run $ print diff
     assert res
+
+testEngineFail :: IO Bool
+testEngineFail = do
+  negativePro <- fmap isLeft $ mkEngine [(1, -1)] Nothing
+  nullPro <- fmap isLeft $ mkEngine [] Nothing
+  greaterPro <- fmap isLeft $ mkEngine [(1, 0.4), (2, 0.5), (3, 0.4)] Nothing
+  let res = negativePro && nullPro && greaterPro
+
+  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
+  return res
+
+
