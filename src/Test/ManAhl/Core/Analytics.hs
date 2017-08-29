@@ -30,12 +30,16 @@ instance Arbitrary CDF where
 
 genPdfPillars :: Gen PdfPillars
 genPdfPillars = do
-    n <- choose (1, 10) :: Gen Int
+    n <- choose (1, 30) :: Gen Int
     suchThat (
-        snd `liftM` foldlM (\ (l, xs) _ -> do
-          i <- choose (-1000, 1000)
-          x <- choose (0.01, max 0.02 $ 1 - l)
-          return ( x + l, (i, x):xs ) ) (0, []) [1 .. n]
+        snd `liftM`
+          foldlM (\ (l, xs) _ -> do
+              i <- choose (-1000, 1000)
+              x <- if l == 100
+                     then return 0
+                     else choose (0, 100 - l)
+              return ( x + l, (i, x / fromIntegral 100):xs ) )
+          (0, []) [1 .. n]
       )
       $ \xs -> let s = sum (snd $ unzip xs) in s > 0 && s <= 1
 
