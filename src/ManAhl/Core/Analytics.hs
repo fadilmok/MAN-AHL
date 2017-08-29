@@ -14,6 +14,8 @@ import ManAhl.Core.Types
 mkPdf :: PdfPillars -> Either String PDF
 mkPdf xs
   | null xs = Left "The pdf pillars are empty."
+  | null $ filter (\(_, x) -> x /= 0) xs =
+      Left "The pdf pillars contain only zero."
   | foldl (\ acc (_, x) -> if acc then acc else x < 0) False xs =
       Left "PDF Pillars contain negative values."
   | foldl (\ acc (_, x) -> acc + x) 0 xs > 1 =

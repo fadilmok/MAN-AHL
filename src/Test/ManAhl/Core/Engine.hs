@@ -45,8 +45,9 @@ testEngineFail :: IO Bool
 testEngineFail = do
   negativePro <- fmap isLeft $ mkEngine [(1, -1)] Nothing
   nullPro <- fmap isLeft $ mkEngine [] Nothing
+  nullPro2 <- fmap isLeft $ mkEngine [(1,0)] Nothing
   greaterPro <- fmap isLeft $ mkEngine [(1, 0.4), (2, 0.5), (3, 0.4)] Nothing
-  let res = negativePro && nullPro && greaterPro
+  let res = negativePro && nullPro && greaterPro && nullPro2
 
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res

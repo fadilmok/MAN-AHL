@@ -66,6 +66,7 @@ tests = [
    ,("Inverse CDF Failure",       testInvCdfFail)
    ,("Mean Failure",              testMeanFail)
    ,("Std Failure",               testStdFail)
+   ,("PDF No regression",         testPDFNoRegression)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -103,8 +104,9 @@ testPdfConstructionFail :: IO Bool
 testPdfConstructionFail = do
   let negativePro = isLeft $ mkPdf [(1, -1)]
       nullPro = isLeft $ mkPdf []
+      nullPro2 = isLeft $ mkPdf [(1,0)]
       greaterPro = isLeft $ mkPdf [(1, 0.4), (2, 0.5), (3, 0.4)]
-      res = negativePro && nullPro && greaterPro
+      res = negativePro && nullPro && greaterPro && nullPro2
 
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
@@ -119,7 +121,7 @@ testCdfConstructionFail =
 testInvCdfFail :: IO Bool
 testInvCdfFail =
   failTest $ do
-    let cdf = CDF $ Map.fromList [(0.5,Just 1), (0.8, Just 2), (1, Just 3)]
+    let cdf = CDF $ Map.fromList [(0.5, Just 1), (0.8, Just 2), (1, Just 3)]
         !c = inverseCdf cdf 1.1
     return ()
 
@@ -134,4 +136,23 @@ testStdFail =
   failTest $ do
     let !c = stdDev []
     return ()
+
+(~=) :: Double -> Double -> Bool
+x ~= y = abs ( x - y ) < 0.0001
+
+equalMap :: Ord a => Map.Map a Double -> Map.Map a Double -> Bool
+equalMap lhs rhs =
+  Map.foldl (\ acc x -> if not acc then False else x < 0.0001) True $
+    Map.unionWith (\ x y -> abs (x - y)) lhs rhs
+
+testPDFNoRegression :: IO Bool
+testPDFNoRegression = do
+  let pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      res  = mkPdf pdfP
+      test = case res of
+              Left _ -> False
+              Right pdf ->
+                unPDF pdf `equalMap` (Map.fromList [(1, 0.3), (2, 0.4), (3, 0.3)])
+  putStrLn $ "Test " ++ if test then "Passed" else "FAILED"
+  return test
 
