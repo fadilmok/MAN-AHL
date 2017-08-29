@@ -59,6 +59,8 @@ tests = [
    ,("PDF Failure",               testPdfConstructionFail)
    ,("CDF Failure",               testCdfConstructionFail)
    ,("Inverse CDF Failure",       testInvCdfFail)
+   ,("Mean Failure",              testMeanFail)
+   ,("Std Failure",               testStdFail)
   ]
 
 propCdfFromPdfComplete :: PDF -> Bool
@@ -103,27 +105,27 @@ testPdfConstructionFail = do
   return res
 
 testCdfConstructionFail :: IO Bool
-testCdfConstructionFail = do
-  let fakePdf = PDF $ Map.fromList [(1, 0.5), (2, 0.3), (3, 0.3)]
-  res' <- try ( do
-        let !c = mkCdf fakePdf
-        return False
-      )
-  let res = case (res' :: Either SomeException Bool) of
-              Left e -> True
-              Right _ -> False
-  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
-  return res
+testCdfConstructionFail =
+  failTest $ do
+    let fakePdf = PDF $ Map.fromList [(1, 0.5), (2, 0.3), (3, 0.3)]
+        !c = mkCdf fakePdf
+    return ()
 
 testInvCdfFail :: IO Bool
-testInvCdfFail = do
-  let cdf = CDF $ Map.fromList [(0.5,Just 1), (0.8, Just 2), (1, Just 3)]
-  res' <- try ( do
-        let !c = inverseCdf cdf 1.1
-        return False
-      )
-  let res = case (res' :: Either SomeException Bool) of
-              Left e -> True
-              Right _ -> False
-  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
-  return res
+testInvCdfFail =
+  failTest $ do
+    let cdf = CDF $ Map.fromList [(0.5,Just 1), (0.8, Just 2), (1, Just 3)]
+        !c = inverseCdf cdf 1.1
+    return ()
+
+testMeanFail :: IO Bool
+testMeanFail =
+  failTest $ do
+    let !c = mean []
+    return ()
+
+testStdFail :: IO Bool
+testStdFail =
+  failTest $ do
+    let !c = stdDev []
+    return ()
