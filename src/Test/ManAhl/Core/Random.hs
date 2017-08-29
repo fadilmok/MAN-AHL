@@ -5,8 +5,12 @@ module Test.ManAhl.Core.Random(
 import Test.QuickCheck
 import Test.QuickCheck.Monadic as QC
 import Test.ManAhl.QuickCheck as Test
+import Control.Exception (evaluate)
+import Control.DeepSeq
 import Control.Monad
 import qualified Data.Map as Map
+import System.CPUTime
+import Text.Printf (printf)
 
 import ManAhl.Core.Types
 import ManAhl.Core.Random
@@ -20,6 +24,7 @@ tests = [
    ,("Mersenne Bounds",       Test.runWith 100 $ propBounds Mersenne)
    ,("Mersenne Uniform",      Test.runWith 10 $ propUniform Mersenne)
    ,("Ecuyer Uniform",        Test.runWith 10 $ propUniform Ecuyer)
+   ,("Perf Comp RNGs",        Test.runWith 10 propPerf)
   ]
 
 propMeanStd :: UniformRNGType -> Property
@@ -62,4 +67,30 @@ propUniform rT = monadicIO $
       QC.run $ print totalCount
       QC.run $ print count
       QC.run $ print proba
+    assert res
+
+propPerf :: Property
+propPerf = monadicIO $
+  do
+    let time :: NFData t => t -> IO Double
+        time f = do
+          start <- getCPUTime
+          x <- evaluate f
+          rnf x `seq` return()
+          end <- getCPUTime
+          return $ fromIntegral (end - start) / 10^12
+
+
+    rngE <- QC.run $ mkUniformRNG $ Just Ecuyer
+    tE <- QC.run $ time $ nextVals rngE 100000
+
+    rngM <- QC.run $ mkUniformRNG $ Just Mersenne
+    tM <- QC.run $ time $ nextVals rngM 100000
+
+    let res = tE > tM
+
+    unless res $ do
+      QC.run $ printf "Time Mersenne: %0.9f " tM
+      QC.run $ printf "Time Ecuyer: %0.9f" tE
+
     assert res
