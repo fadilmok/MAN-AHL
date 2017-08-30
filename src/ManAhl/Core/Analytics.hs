@@ -9,7 +9,7 @@ module ManAhl.Core.Analytics(
 
 import Data.Function (on)
 import Data.List
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import ManAhl.Core.Types
 
 mkPdf :: PdfPillars -> Either String PDF

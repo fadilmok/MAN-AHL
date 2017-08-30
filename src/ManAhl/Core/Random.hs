@@ -26,7 +26,7 @@ instance RandomGen UniformRNG where
   split (RandomMersenne rng) = let (g1, g2) = split rng in (RandomMersenne g1, RandomMersenne g2)
 
 next' :: State UniformRNG Double
-next' = state $ randomR (0, 1)
+next' = state $! randomR (0, 1)
 
 nexts' :: Int -> State UniformRNG [Double]
 nexts' n = replicateM n next'

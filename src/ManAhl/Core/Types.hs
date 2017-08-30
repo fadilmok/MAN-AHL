@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module ManAhl.Core.Types(
   Engine(..),
   UniformRNGType(..),
@@ -9,13 +10,13 @@ module ManAhl.Core.Types(
 ) where
 
 import Control.Monad.State
-import Data.Map
+import Data.Map.Strict
 import qualified System.Random as Ecuyer
 import qualified System.Random.Mersenne.Pure64 as Mersenne
 
 data UniformRNG
-  = RandomEcuyer Ecuyer.StdGen
-  | RandomMersenne Mersenne.PureMT
+  = RandomEcuyer   {-# UNPACK #-} !Ecuyer.StdGen
+  | RandomMersenne {-# UNPACK #-} !Mersenne.PureMT
   deriving Show
 
 data UniformRNGType = Ecuyer | Mersenne
