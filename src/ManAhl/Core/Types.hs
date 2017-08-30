@@ -32,7 +32,7 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
 
 data Engine = Engine{
     pdf  :: PDF
-   ,cdf  :: CDF
+   ,cdf  :: !CDF
    ,seed :: UniformRNG
   }
 
