@@ -3,7 +3,8 @@ module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
   mkHistogram,
-  mean, stdDev
+  mean, stdDev,
+  mkHistogramUniform
 ) where
 
 import Data.Function (on)
@@ -45,12 +46,15 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
-mkHistogram :: [Maybe Int] -> Histogram
+mkHistogram :: [Maybe Int] -> Histogram (Maybe Int)
 mkHistogram xs = Histogram{..}
   where
     hsCount       = Map.fromListWith (+) . map (,1) $ xs
     hsTotalCount  = length xs
     hsStat        = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
+
+mkHistogramUniform :: [Double] -> Histogram Double
+mkHistogramUniform xs = undefined
 
 mean :: (Num a, Fractional a) => [a] -> a
 mean [] = error "The input list is empty"

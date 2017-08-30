@@ -24,10 +24,10 @@ runWith n p = fmap isSuccess $
 
 failTest :: IO() -> IO Bool
 failTest f = do
-  res' <- try ( do
+  res' <- try $ do
         f
         return False
-      )
+
   let res = case (res' :: Either SomeException Bool) of
               Left e -> True
               Right _ -> False

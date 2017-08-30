@@ -16,8 +16,10 @@ import qualified System.Random.Mersenne.Pure64 as Mersenne
 data UniformRNG
   = RandomEcuyer Ecuyer.StdGen
   | RandomMersenne Mersenne.PureMT
+  deriving Show
 
 data UniformRNGType = Ecuyer | Mersenne
+  deriving (Show, Read)
 
 type PdfPillars = [(Int, Double)]
 type CdfPillars = [(Double, Maybe Int)]
@@ -33,8 +35,8 @@ data Engine = Engine{
    ,seed :: UniformRNG
   }
 
-data Histogram = Histogram {
-    hsCount       :: Map (Maybe Int) Int
-   ,hsStat        :: Map (Maybe Int) Double
+data Histogram a = Histogram {
+    hsCount       :: Map a Int
+   ,hsStat        :: Map a Double
    ,hsTotalCount  :: Int
   } deriving Show

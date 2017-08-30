@@ -2,14 +2,28 @@ module ManAhl.Run (
   main
 ) where
 
-import ManAhl.Core.Engine
-import ManAhl.Core.Types
-import ManAhl.Core.Analytics
+import ManAhl.CLI
+import Control.DeepSeq
+import Control.Exception
+import System.Environment
+import Text.Printf
 
 main :: IO()
 main = do
-  let datum = [(1 , 0.2), (3, 0.5), (10, 0.1), (100,0.2) ]
-  Right engine <- mkEngine datum Nothing
-  print $ nextNum' engine
-  print $ mkHistogram $ nextNums' engine 100000
+  args <- getArgs
+  query <- try $
+            evaluate $ force $ parse args
+
+  case query :: Either SomeException (Maybe Query) of
+    Right (Just q) -> do
+      r <- run q
+      case r of
+        Left err -> do
+          putStrLn "There was an error during the run: "
+          putStrLn err
+        Right res -> print res
+    _ -> do
+      putStrLn "Error in the input argurments"
+      putStrLn "Follow the help below: "
+      mapM_ (\ (x, y) -> printf "%-35s: %s \n" x y) help
 
