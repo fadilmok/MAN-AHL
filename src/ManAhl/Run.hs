@@ -16,6 +16,9 @@ main = do
 
   case query :: Either SomeException (Maybe Query) of
     Right (Just q) -> do
+      putStrLn "Running query: "
+      print q
+      putStrLn ""
       r <- run q
       case r of
         Left err -> do
@@ -25,5 +28,6 @@ main = do
     _ -> do
       putStrLn "Error in the input argurments"
       putStrLn "Follow the help below: "
-      mapM_ (\ (x, y) -> printf "%-35s: %s \n" x y) help
+      putStrLn ""
+      mapM_ (\ (x, y) -> printf "%-45s: %s \n" x y) help
 

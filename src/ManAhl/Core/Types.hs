@@ -19,7 +19,7 @@ data UniformRNG
   deriving Show
 
 data UniformRNGType = Ecuyer | Mersenne
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 type PdfPillars = [(Int, Double)]
 type CdfPillars = [(Double, Maybe Int)]

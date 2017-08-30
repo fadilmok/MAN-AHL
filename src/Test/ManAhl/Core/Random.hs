@@ -87,10 +87,10 @@ propPerf = monadicIO $
     rngM <- QC.run $ mkUniformRNG $ Just Mersenne
     tM <- QC.run $ time $ nextVals rngM 100000
 
-    let res = tE > tM
+    let res = tE < 0.3 && tM < 0.3
 
     unless res $ do
-      QC.run $ printf "Time Mersenne: %0.9f " tM
-      QC.run $ printf "Time Ecuyer: %0.9f" tE
+      QC.run $ printf "Time Mersenne: %0.9f sec" tM
+      QC.run $ printf "Time Ecuyer: %0.9f sec" tE
 
     assert res

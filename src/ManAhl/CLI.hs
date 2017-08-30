@@ -2,7 +2,8 @@ module ManAhl.CLI(
   parse,
   run,
   help,
-  Query, Result
+  Query(..), Result,
+  pillarsDefault
 ) where
 
 import ManAhl.Core.Types
@@ -15,15 +16,13 @@ import Data.List
 import Data.Maybe
 import Data.Map (toList)
 
-import Debug.Trace
-
 pillarsDefault :: PdfPillars
 pillarsDefault = [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
 
 data Query =
-      RunWeightedWith PdfPillars Int (Maybe UniformRNGType)
-    | RunUniformWith Int (Maybe UniformRNGType)
-  deriving Show
+      RunWeightedWith PdfPillars Int UniformRNGType
+    | RunUniformWith Int UniformRNGType
+  deriving (Show, Eq)
 instance NFData Query where
   rnf (RunWeightedWith p n u) = rnf p `seq` rnf n
   rnf (RunUniformWith n u) = rnf n
@@ -41,11 +40,11 @@ parse xs = do
     args <- getArgs
     let run     = fromMaybe Weighted $ fmap read $ lookup "run" args
         pillars = fromMaybe pillarsDefault $ fmap read $ lookup "pillars" args
-        nSims   = fromMaybe 100000 $ fmap read $ lookup "nSims" args
+        nSims   = fromMaybe 1000000 $ fmap read $ lookup "nSims" args
         rng     = fromMaybe Mersenne $ fmap read $ lookup "rng" args
     return $ case run of
-      Weighted -> RunWeightedWith pillars nSims $ Just rng
-      Uniform -> RunUniformWith nSims $ Just rng
+      Weighted -> RunWeightedWith pillars nSims rng
+      Uniform -> RunUniformWith nSims rng
   where
     getArgs :: Maybe [(String, String)]
     getArgs = do
@@ -62,13 +61,13 @@ parse xs = do
 
 run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
-  rng <- mkUniformRNG rngT
+  rng <- mkUniformRNG $ Just rngT
   let vals = nextVals rng nSims
       stats = mkHistogramUniform vals
   return $
     Right $ ResultUniform $ toList $ hsStat stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
-  engine <- mkEngine pdfPillars rngT
+  engine <- mkEngine pdfPillars $ Just rngT
   return $ case engine of
     Left s -> Left s
     Right e -> let
@@ -79,7 +78,7 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
 help :: [(String, String)]
 help = [
     ("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
-   ,("-nSims=100000", "Nb of sims")
+   ,("-nSims=1000000", "Nb of sims")
    ,("-rng=Mersenne", "RNG type: Mersenne or Ecuyer")
    ,("-run=Weighted", "Run type: Weighted or Uniform")
   ]

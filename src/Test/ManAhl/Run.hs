@@ -10,10 +10,12 @@ import Test.QuickCheck
 import qualified Test.ManAhl.Core.Analytics as Analytics
 import qualified Test.ManAhl.Core.Random as Random
 import qualified Test.ManAhl.Core.Engine as Engine
+import qualified Test.ManAhl.CLI as CLI
 
 main :: IO()
 main = do
   success <- forM (
+      CLI.tests ++
       Analytics.tests ++
       Random.tests ++
       Engine.tests
