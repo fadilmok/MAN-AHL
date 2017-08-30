@@ -72,7 +72,7 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
     Left s -> Left s
     Right e -> let
         vals = nextNums' e nSims
-        res = toList $ hsStat $ mkHistogram vals
+        res = toList $ hsStat $ mkHistogramWeighted vals
       in Right $ ResultWeighted res
 
 help :: [(String, String)]

@@ -50,23 +50,16 @@ propUniform :: UniformRNGType -> Property
 propUniform rT = monadicIO $
   do
     rng <- QC.run $ mkUniformRNG $ Just rT
-    let ranges :: Map.Map Double Int
-        ranges = Map.fromList $ zip (map (/100)[1,2 .. 100]) [0..]
-        n = nRand
-        vals = nextVals rng n
-        count = foldl (\ m x -> Map.insertWith (+)
-          (case x `Map.lookupGE` ranges of Just y -> fst y; Nothing -> error "Failure") 1 m)
-            ranges vals
-        totalCount = Map.foldl (\acc x -> x + acc) 0 count
-        proba = Map.map (\ x -> round $ fromIntegral x * 100 / fromIntegral n) count
+    let vals = nextVals rng nRand
+        stats = mkHistogramUniform vals
     let res =
-          foldl (\ acc (_, x) ->
-            if not acc then False else x == round (100 / fromIntegral (Map.size ranges))) True $
-              Map.toList proba
+          Map.foldl (\ acc x ->
+            if not acc then False
+                    else round (x * 100) ==
+                         round (100 / fromIntegral (Map.size $ hsCount stats))) True $
+              hsStat stats
     unless res $ do
-      QC.run $ print totalCount
-      QC.run $ print count
-      QC.run $ print proba
+      QC.run $ print stats
     assert res
 
 propPerf :: Property

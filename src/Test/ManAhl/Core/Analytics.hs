@@ -92,7 +92,7 @@ propPdfConsistency (PDF pdfP) = Map.foldl (\acc x -> x + acc) 0 pdfP <= 1
 propMkHisto :: [Maybe Int] -> Bool
 propMkHisto xs = hsTotalCount hist == (Map.foldl (\acc x -> x + acc) 0 $ hsCount hist)
   where
-    hist = mkHistogram xs
+    hist = mkHistogramWeighted xs
 
 propInvCdfValid :: (PDF, [Double]) -> Bool
 propInvCdfValid (pdf, xs) = all (==True) $
