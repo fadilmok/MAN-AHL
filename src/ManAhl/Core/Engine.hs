@@ -24,7 +24,7 @@ mkEngine pdf typ = do
       (\ p -> Right Engine {
         pdf = p
        ,cdf = mkCdf p
-       ,seed = rng
+       ,unifRng = rng
       }) pdf'
 
 nextNum :: State Engine (Maybe Int)

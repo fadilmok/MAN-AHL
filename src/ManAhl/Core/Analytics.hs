@@ -2,9 +2,9 @@
 module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
-  mkHistogramWeighted,
   mean, stdDev,
-  mkHistogramUniform
+  mkStatsUniform,
+  mkStatsWeighted
 ) where
 
 import Data.Function (on)
@@ -46,18 +46,18 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
-mkHistogramWeighted :: [Maybe Int] -> Histogram (Maybe Int)
-mkHistogramWeighted xs = Histogram{..}
+mkStatsWeighted :: [Maybe Int] -> Stats (Maybe Int)
+mkStatsWeighted xs = Stats{..}
   where
     hsCount       = Map.fromListWith (+) . map (,1) $ xs
     hsTotalCount  = Map.foldl (\acc x -> x + acc) 0 hsCount
-    hsStat        = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
+    hsProba       = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
 
-mkHistogramUniform :: [Double] -> Histogram Double
-mkHistogramUniform xs = Histogram{..}
+mkStatsUniform :: [Double] -> Stats Double
+mkStatsUniform xs = Stats{..}
   where
     hsTotalCount  = Map.foldl (\acc x -> x + acc) 0 hsCount
-    hsStat        = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
+    hsProba       = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
     ranges        = Map.fromList $ zip (map (/100) [1,2 .. 100]) [0..] :: Map.Map Double Int
     hsCount       = foldl (\ m x -> Map.insertWith (+)
           (case x `Map.lookupGE` ranges of Just y -> fst y; Nothing -> error "Failure") 1 m)

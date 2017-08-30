@@ -61,8 +61,8 @@ tests = [
    ,("Histo creation",            run propMkHisto)
    ,("InvCDF valid",
         run $ forAll genInvCdfQuery propInvCdfValid)
-   ,("PDF Failure",               testPdfConstructionFail)
-   ,("CDF Failure",               testCdfConstructionFail)
+   ,("PDF Failure",               testPdfFail)
+   ,("CDF Failure",               testCdfFail)
    ,("Inverse CDF Failure",       testInvCdfFail)
    ,("Mean Failure",              testMeanFail)
    ,("Std Failure",               testStdFail)
@@ -92,7 +92,7 @@ propPdfConsistency (PDF pdfP) = Map.foldl (\acc x -> x + acc) 0 pdfP <= 1
 propMkHisto :: [Maybe Int] -> Bool
 propMkHisto xs = hsTotalCount hist == (Map.foldl (\acc x -> x + acc) 0 $ hsCount hist)
   where
-    hist = mkHistogramWeighted xs
+    hist = mkStatsWeighted xs
 
 propInvCdfValid :: (PDF, [Double]) -> Bool
 propInvCdfValid (pdf, xs) = all (==True) $
@@ -101,8 +101,8 @@ propInvCdfValid (pdf, xs) = all (==True) $
     cdf = mkCdf pdf
     set = Set.fromList $ Nothing : map Just (fst $ unzip $ Map.toList $ unPDF pdf)
 
-testPdfConstructionFail :: IO Bool
-testPdfConstructionFail = do
+testPdfFail :: IO Bool
+testPdfFail = do
   let negativePro = isLeft $ mkPdf [(1, -1)]
       nullPro = isLeft $ mkPdf []
       nullPro2 = isLeft $ mkPdf [(1,0)]
@@ -112,8 +112,8 @@ testPdfConstructionFail = do
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
 
-testCdfConstructionFail :: IO Bool
-testCdfConstructionFail =
+testCdfFail :: IO Bool
+testCdfFail =
   failTest $ do
     let fakePdf = PDF $ Map.fromList [(1, 0.5), (2, 0.3), (3, 0.3)]
         !c = mkCdf fakePdf

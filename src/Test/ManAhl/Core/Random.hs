@@ -48,13 +48,13 @@ propUniform rT = monadicIO $
   do
     rng <- QC.run $ mkUniformRNG $ Just rT
     let vals = nextVals rng nRand
-        stats = mkHistogramUniform vals
+        stats = mkStatsUniform vals
     let res =
           Map.foldl (\ acc x ->
             if not acc then False
                     else round (x * 100) ==
                          round (100 / fromIntegral (Map.size $ hsCount stats))) True $
-              hsStat stats
+              hsProba stats
     unless res $ do
       QC.run $ print stats
     assert res

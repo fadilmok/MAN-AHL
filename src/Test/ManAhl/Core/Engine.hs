@@ -37,10 +37,10 @@ propWeightedProba rT pdfP = monadicIO $
     e' <- QC.run $ mkEngine pdfP $ Just rT
     let e = case e' of Left s -> error s; Right x -> x
         nexts = nextNums' e 1000000
-        hist = mkHistogramWeighted nexts
+        stats = mkStatsWeighted nexts
         pdf' = unPDF $ pdf e
-        stat = hsStat hist
-        diff = Map.mapWithKey (\ v p -> abs (stat ! Just v - p)) pdf'
+        proba = hsProba stats
+        diff = Map.mapWithKey (\ v p -> abs (proba ! Just v - p)) pdf'
         res = Map.foldl (\ acc v -> if not acc then False else v <= 0.005 ) True diff
     unless res $
       QC.run $ print diff

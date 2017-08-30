@@ -63,16 +63,16 @@ run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
   rng <- mkUniformRNG $ Just rngT
   let vals = nextVals rng nSims
-      stats = mkHistogramUniform vals
+      stats = mkStatsUniform vals
   return $
-    Right $ ResultUniform $ toList $ hsStat stats
+    Right $ ResultUniform $ toList $ hsProba stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
   engine <- mkEngine pdfPillars $ Just rngT
   return $ case engine of
     Left s -> Left s
     Right e -> let
         vals = nextNums' e nSims
-        res = toList $ hsStat $ mkHistogramWeighted vals
+        res = toList $ hsProba $ mkStatsWeighted vals
       in Right $ ResultWeighted res
 
 help :: [(String, String)]
