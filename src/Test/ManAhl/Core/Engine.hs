@@ -15,15 +15,20 @@ import Control.Monad
 import Data.Either
 import qualified Data.Map as Map
 import Data.Map ((!))
+import Text.Printf (printf)
 
 tests :: [(String, IO Bool)]
 tests = [
-    ("Engine test - Mersene",
+    ("Engine distri check - Mersene",
         Test.runWith 10 $ forAll genPdfPillars $ propWeightedProba Mersenne)
-   ,("Engine test - Ecuyer",
+   ,("Engine distri check - Ecuyer",
         Test.runWith 10 $ forAll genPdfPillars $ propWeightedProba Ecuyer)
    ,("Engine fail",
         testEngineFail)
+   ,("Engine Perf - Mersene",
+        Test.runWith 10 $ forAll genPdfPillars $ propPerf Mersenne)
+   ,("Engine Perf - Ecuyer",
+        Test.runWith 10 $ forAll genPdfPillars $ propPerf Ecuyer)
   ]
 
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
@@ -31,7 +36,7 @@ propWeightedProba rT pdfP = monadicIO $
   do
     e' <- QC.run $ mkEngine pdfP $ Just rT
     let e = case e' of Left s -> error s; Right x -> x
-        nexts = nextNums' e $ 1000000
+        nexts = nextNums' e 1000000
         hist = mkHistogramWeighted nexts
         pdf' = unPDF $ pdf e
         stat = hsStat hist
@@ -52,4 +57,17 @@ testEngineFail = do
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
 
+propPerf :: UniformRNGType -> PdfPillars -> Property
+propPerf rT pdfP = monadicIO $
+  do
+    e' <- QC.run $ mkEngine pdfP $ Just rT
+    let e = case e' of Left s -> error s; Right x -> x
+    t <- QC.run $ time $ nextNums' e 100000
+
+    let res = t < 0.35
+
+    unless res $
+      QC.run $ printf "Time %s: %0.9f sec" (show rT) t
+
+    assert res
 

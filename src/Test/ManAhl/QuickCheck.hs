@@ -1,9 +1,12 @@
 module Test.ManAhl.QuickCheck(
   run, runWith,
   nTests, nRand,
-  failTest
+  failTest, time
 ) where
 
+import Control.Exception (evaluate)
+import Control.DeepSeq
+import System.CPUTime
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 
@@ -33,3 +36,12 @@ failTest f = do
               Right _ -> False
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
+
+time :: NFData t => t -> IO Double
+time f = do
+  start <- getCPUTime
+  x <- evaluate f
+  rnf x `seq` return()
+  end <- getCPUTime
+  return $ fromIntegral (end - start) / 10^12
+

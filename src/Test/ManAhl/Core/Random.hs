@@ -5,11 +5,8 @@ module Test.ManAhl.Core.Random(
 import Test.QuickCheck
 import Test.QuickCheck.Monadic as QC
 import Test.ManAhl.QuickCheck as Test
-import Control.Exception (evaluate)
-import Control.DeepSeq
 import Control.Monad
 import qualified Data.Map as Map
-import System.CPUTime
 import Text.Printf (printf)
 
 import ManAhl.Core.Types
@@ -65,15 +62,6 @@ propUniform rT = monadicIO $
 propPerf :: Property
 propPerf = monadicIO $
   do
-    let time :: NFData t => t -> IO Double
-        time f = do
-          start <- getCPUTime
-          x <- evaluate f
-          rnf x `seq` return()
-          end <- getCPUTime
-          return $ fromIntegral (end - start) / 10^12
-
-
     rngE <- QC.run $ mkUniformRNG $ Just Ecuyer
     tE <- QC.run $ time $ nextVals rngE 100000
 
