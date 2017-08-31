@@ -13,23 +13,28 @@ import Text.Printf
 main :: IO()
 main = do
   args <- getArgs
-  query <- try $
+  let printHelp =
+        mapM_ (\ (x, y) -> printf "%-45s: %s \n" x y) help
+
+  if "-help" `elem` args
+     then printHelp
+     else do
+        query <- try $
             evaluate $ force $ parse args
 
-  case query :: Either SomeException (Maybe Query) of
-    Right (Just q) -> do
-      putStrLn "Running query: "
-      print q
-      putStrLn ""
-      r <- run q
-      case r of
-        Left err -> do
-          putStrLn "There was an error during the run: "
-          putStrLn err
-        Right res -> print res
-    _ -> do
-      putStrLn "Error in the input argurments"
-      putStrLn "Follow the help below: "
-      putStrLn ""
-      mapM_ (\ (x, y) -> printf "%-45s: %s \n" x y) help
-
+        case query :: Either SomeException (Maybe Query) of
+          Right (Just q) -> do
+            putStrLn "Running query: "
+            print q
+            putStrLn ""
+            r <- run q
+            case r of
+              Left err -> do
+                putStrLn "There was an error during the run: "
+                putStrLn err
+              Right res -> print res
+          _ -> do
+            putStrLn "Error in the input argurments"
+            putStrLn "Follow the help below: "
+            putStrLn ""
+            printHelp

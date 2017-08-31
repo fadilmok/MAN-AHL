@@ -90,7 +90,8 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
 -- | Give the CLI help
 help :: [(String, String)]
 help = [
-    ("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
+    ("-help","")
+   ,("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
    ,("-nSims=1000000", "Nb of sims")
    ,("-rng=Mersenne", "RNG type: Mersenne or Ecuyer")
    ,("-run=Weighted", "Run type: Weighted or Uniform")
