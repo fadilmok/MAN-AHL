@@ -55,7 +55,7 @@ nextUStat = do
   uniRng <- lift get
   let (!x, !r) = runState nextVal uniRng
   lift $ put r
-  Stats !cs !n <- get
+  Stats cs n <- get
   let !stats = Stats {
           hsCount = Map.insertWith (+)
             (case x `Map.lookupGE` statRange of
@@ -67,8 +67,11 @@ nextUStat = do
 
 allUStats :: Int -> StatUniEngine
 allUStats 0 = error "You need at least one element"
-allUStats n = foldl' (\ !acc !x -> acc >> x) nextUStat $
-  replicate (n-1) nextUStat
+allUStats n = allStats' (n-1) nextUStat
+  where
+    allStats' :: Int -> StatUniEngine -> StatUniEngine
+    allStats' 1 acc = acc
+    allStats' !n acc = allStats' (n - 1) $ acc >> nextUStat
 
 statRange :: Map Double Int
 statRange = Map.fromList $ zip (map (/100) [1, 2 .. 100]) [0..]

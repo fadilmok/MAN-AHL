@@ -68,7 +68,7 @@ nextStat = do
   lift $ lift $ put r
   let !y = inverseCdf cdf x
 
-  Stats !cs !n <- get
+  Stats cs n <- get
   let !stats = Stats {
           hsCount = Map.insertWith (+) y 1 cs
          ,hsTotalCount = n + 1
@@ -78,5 +78,9 @@ nextStat = do
 
 allStats :: Int -> StatWPEngine
 allStats 0 = error "You need at least one element"
-allStats n = foldl' (\ !acc _ -> acc >> nextStat) nextStat [1..n]
+allStats !n = allStats' (n-1) nextStat
+  where
+    allStats' :: Int -> StatWPEngine -> StatWPEngine
+    allStats' 1 acc = acc
+    allStats' n acc = allStats' (n - 1) $ acc >> nextStat
 
