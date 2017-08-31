@@ -1,3 +1,4 @@
+-- | Module to run all the testsuites
 module Test.ManAhl.Run (
   main
 ) where
@@ -12,6 +13,7 @@ import qualified Test.ManAhl.Core.Random as Random
 import qualified Test.ManAhl.Core.Engine as Engine
 import qualified Test.ManAhl.CLI as CLI
 
+-- | Main to run the testsuite, does not stop for failure
 main :: IO()
 main = do
   success <- forM (

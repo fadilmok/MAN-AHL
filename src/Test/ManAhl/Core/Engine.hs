@@ -1,3 +1,4 @@
+-- | Testsuite for the Engine
 module Test.ManAhl.Core.Engine(
   tests
 ) where
@@ -5,7 +6,6 @@ module Test.ManAhl.Core.Engine(
 import Test.QuickCheck
 import Test.QuickCheck.Monadic as QC
 import Test.ManAhl.QuickCheck as Test
-import Test.ManAhl.Core.Analytics (genPdfPillars)
 
 import ManAhl.Core.Types
 import ManAhl.Core.Engine
@@ -17,6 +17,7 @@ import qualified Data.Map as Map
 import Data.Map ((!))
 import Text.Printf (printf)
 
+-- | List of tests related to the engine
 tests :: [(String, IO Bool)]
 tests = [
     ("Engine distri check - Mersene",
@@ -31,6 +32,7 @@ tests = [
         Test.runWith 10 $ forAll genPdfPillars $ propPerf Ecuyer)
   ]
 
+-- | Test taking a random
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
 propWeightedProba rT pdfP = monadicIO $
   do

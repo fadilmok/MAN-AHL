@@ -1,15 +1,14 @@
 {-# LANGUAGE BangPatterns #-}
 module Test.ManAhl.Core.Analytics(
-  tests,
-  genPdfPillars
+  tests
 ) where
 
 import ManAhl.Core.Analytics
 import ManAhl.Core.Types
+
 import Control.Exception
 import Control.Monad
 import Data.Either
-import Data.Foldable
 import Data.List
 import Data.Maybe
 import qualified Data.Map as Map
@@ -28,26 +27,10 @@ instance Arbitrary PDF where
 instance Arbitrary CDF where
   arbitrary = mkCdf `liftM` arbitrary
 
-genPdfPillars :: Gen PdfPillars
-genPdfPillars = do
-    n <- choose (1, 10) :: Gen Int
-    suchThat (
-        snd `liftM`
-          foldlM (\ (l, xs) _ -> do
-              i <- choose (-1000, 1000)
-              x <- if l >= 1
-                     then return 0
-                     else choose (0.001, 1 - l)
-              return ( x + l, (i, x):xs ) )
-          (0, []) [1 .. n]
-      )
-      $ \xs -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
-                  in s > 0 && s <= 1
-
 genInvCdfQuery :: Gen (PDF, [Double])
 genInvCdfQuery = do
   pdf <- arbitrary
-  n <- choose (1, 1000)
+  n <- choose (1, nTests)
   xs <- replicateM n $ choose(0, 1)
   return (pdf, xs)
 
