@@ -3,12 +3,12 @@ module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
   mean, stdDev,
-  mkStatsUniform,
-  mkStatsWeighted
+  probaFromCount
 ) where
 
 import Data.Function (on)
 import Data.List
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import ManAhl.Core.Types
 
@@ -46,22 +46,9 @@ inverseCdf (CDF m) n
       Just (x, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
-mkStatsWeighted :: [Maybe Int] -> Stats (Maybe Int)
-mkStatsWeighted xs = Stats{..}
-  where
-    hsCount       = Map.fromListWith (+) . map (,1) $ xs
-    hsTotalCount  = Map.foldl (\acc x -> x + acc) 0 hsCount
-    hsProba       = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
-
-mkStatsUniform :: [Double] -> Stats Double
-mkStatsUniform xs = Stats{..}
-  where
-    hsTotalCount  = Map.foldl (\acc x -> x + acc) 0 hsCount
-    hsProba       = Map.map (\ x -> fromIntegral x / fromIntegral hsTotalCount) hsCount
-    ranges        = Map.fromList $ zip (map (/100) [1,2 .. 100]) [0..] :: Map.Map Double Int
-    hsCount       = foldl (\ m x -> Map.insertWith (+)
-          (case x `Map.lookupGE` ranges of Just y -> fst y; Nothing -> error "Failure") 1 m)
-            ranges xs
+probaFromCount :: Stats a -> Map a Double
+probaFromCount (Stats cs n)
+  = Map.map (\ x -> fromIntegral x / fromIntegral n) cs
 
 mean :: (Num a, Fractional a) => [a] -> a
 mean [] = error "The input list is empty"

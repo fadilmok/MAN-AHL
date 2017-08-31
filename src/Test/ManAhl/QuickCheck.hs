@@ -37,10 +37,10 @@ failTest f = do
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
 
-time :: NFData t => t -> IO Double
+time :: NFData t => IO t -> IO Double
 time f = do
   start <- getCPUTime
-  x <- evaluate f
+  x <- f
   rnf x `seq` return()
   end <- getCPUTime
   return $ fromIntegral (end - start) / 10^12

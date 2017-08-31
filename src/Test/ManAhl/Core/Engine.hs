@@ -34,12 +34,11 @@ tests = [
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
 propWeightedProba rT pdfP = monadicIO $
   do
-    e' <- QC.run $ mkEngine pdfP $ Just rT
+    let e' = mkEngineParams pdfP $ Just rT
     let e = case e' of Left s -> error s; Right x -> x
-        nexts = nextNums' e 1000000
-        stats = mkStatsWeighted nexts
-        pdf' = unPDF $ pdf e
-        proba = hsProba stats
+    stats <- QC.run $ runStatEngine e $ allStats 1000000
+    let pdf' = unPDF $ pdf e
+        proba = probaFromCount stats
         diff = Map.mapWithKey (\ v p -> abs (proba ! Just v - p)) pdf'
         res = Map.foldl (\ acc v -> if not acc then False else v <= 0.005 ) True diff
     unless res $
@@ -48,11 +47,11 @@ propWeightedProba rT pdfP = monadicIO $
 
 testEngineFail :: IO Bool
 testEngineFail = do
-  negativePro <- fmap isLeft $ mkEngine [(1, -1)] Nothing
-  nullPro <- fmap isLeft $ mkEngine [] Nothing
-  nullPro2 <- fmap isLeft $ mkEngine [(1,0)] Nothing
-  greaterPro <- fmap isLeft $ mkEngine [(1, 0.4), (2, 0.5), (3, 0.4)] Nothing
-  let res = negativePro && nullPro && greaterPro && nullPro2
+  let negativePro = isLeft $ mkEngineParams [(1, -1)] Nothing
+      nullPro = isLeft $ mkEngineParams [] Nothing
+      nullPro2 = isLeft $ mkEngineParams [(1,0)] Nothing
+      greaterPro = isLeft $ mkEngineParams [(1, 0.4), (2, 0.5), (3, 0.4)] Nothing
+      res = negativePro && nullPro && greaterPro && nullPro2
 
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
@@ -60,11 +59,13 @@ testEngineFail = do
 propPerf :: UniformRNGType -> PdfPillars -> Property
 propPerf rT pdfP = monadicIO $
   do
-    e' <- QC.run $ mkEngine pdfP $ Just rT
+    let e'= mkEngineParams pdfP $ Just rT
     let e = case e' of Left s -> error s; Right x -> x
-    t <- QC.run $ time $ nextNums' e 100000
+    t <- QC.run $ time $
+      fmap probaFromCount $
+        runStatEngine e $ allStats 100000
 
-    let res = t < 0.35
+    let res = t < 0.4
 
     unless res $
       QC.run $ printf "Time %s: %0.9f sec" (show rT) t

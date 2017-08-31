@@ -58,7 +58,6 @@ tests = [
    ,("PDF stable with reverse Pillars",
         run $ forAll genPdfPillars propPdfStable)
    ,("PDF consistency",           run propPdfConsistency)
-   ,("Histo creation",            run propMkHisto)
    ,("InvCDF valid",
         run $ forAll genInvCdfQuery propInvCdfValid)
    ,("PDF Failure",               testPdfFail)
@@ -88,11 +87,6 @@ propPdfStable pdfP = mkPdf pdfP == mkPdf ( reverse pdfP )
 
 propPdfConsistency :: PDF -> Bool
 propPdfConsistency (PDF pdfP) = Map.foldl (\acc x -> x + acc) 0 pdfP <= 1
-
-propMkHisto :: [Maybe Int] -> Bool
-propMkHisto xs = hsTotalCount hist == (Map.foldl (\acc x -> x + acc) 0 $ hsCount hist)
-  where
-    hist = mkStatsWeighted xs
 
 propInvCdfValid :: (PDF, [Double]) -> Bool
 propInvCdfValid (pdf, xs) = all (==True) $

@@ -2,9 +2,13 @@
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
   -- * Random Numbers
-  Engine(..),
+  EngineParams(..),
   UniformRNGType(..),
   UniformRNG(..),
+  ProbaUniEngine,
+  StatUniEngine,
+  ProbaWPEngine,
+  StatWPEngine,
   -- * Analytics
   CDF(..), PDF(..),
   PdfPillars,
@@ -12,7 +16,8 @@ module ManAhl.Core.Types(
   Stats(..)
 ) where
 
-import Control.Monad.State
+import Control.Monad.State.Strict
+import Control.Monad.Reader
 import Data.Map.Strict
 import qualified System.Random as Ecuyer
 import qualified System.Random.Mersenne.Pure64 as Mersenne
@@ -43,14 +48,25 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
   deriving (Show, Eq)
 
 -- | Weighted Probability Engine
-data Engine = Engine{
+-- contains the PDF, CDF and Uniform RNG
+-- needed to compute the weighted probabilities
+data EngineParams = EngineParams {
     pdf     :: PDF
    ,cdf     :: !CDF
-   ,unifRng :: UniformRNG
+   ,uniRngT :: Maybe UniformRNGType
   }
 
+-- | Statistic of a given Run [a]
+--  hsCount : represent the frequency of each unique element
+--  hsTotalCount : the total nb of element
 data Stats a = Stats {
-    hsCount       :: Map a Int
-   ,hsProba       :: Map a Double
-   ,hsTotalCount  :: Int
+    hsCount       :: !(Map a Int)
+   ,hsTotalCount  :: !Int
   } deriving Show
+
+type ProbaUniEngine a = State UniformRNG a
+type StatUniEngine = StateT (Stats Double) (State UniformRNG) (Stats Double)
+
+type ProbaWPEngine a = ReaderT EngineParams (State UniformRNG) a
+type StatWPEngine = ReaderT EngineParams (StateT (Stats (Maybe Int)) (State UniformRNG)) (Stats (Maybe Int))
+

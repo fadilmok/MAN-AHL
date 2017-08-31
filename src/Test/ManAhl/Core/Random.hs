@@ -26,9 +26,8 @@ tests = [
 
 propMeanStd :: UniformRNGType -> Property
 propMeanStd rng = monadicIO $ do
-  rng <- QC.run $ mkUniformRNG $ Just rng
-  let vals = nextVals rng nRand
-      m = mean vals
+  vals <- QC.run $ runProbaUni (Just rng) $ nextVals nRand
+  let m = mean vals
       std = stdDev vals
       x ~= y = abs (x - y) <= 0.04
       res = m ~= 0.5 && std ~= 0.28
@@ -38,23 +37,20 @@ propMeanStd rng = monadicIO $ do
 
 propBounds :: UniformRNGType -> Property
 propBounds rng = monadicIO $ do
-  rng <- QC.run $ mkUniformRNG $ Just rng
-  let vals = nextVals rng nRand
-      res = foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True vals
-  assert res
+  vals <- QC.run $ runProbaUni (Just rng) $ nextVals nRand
+  assert $
+    foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True vals
 
 propUniform :: UniformRNGType -> Property
 propUniform rT = monadicIO $
   do
-    rng <- QC.run $ mkUniformRNG $ Just rT
-    let vals = nextVals rng nRand
-        stats = mkStatsUniform vals
+    stats <- QC.run $ runStatUni (Just rT) $ allUStats nRand
     let res =
           Map.foldl (\ acc x ->
             if not acc then False
-                    else round (x * 100) ==
-                         round (100 / fromIntegral (Map.size $ hsCount stats))) True $
-              hsProba stats
+              else round (x * 100) ==
+                round (100 / fromIntegral (Map.size $ hsCount stats))) True $
+             probaFromCount stats
     unless res $ do
       QC.run $ print stats
     assert res
@@ -62,13 +58,15 @@ propUniform rT = monadicIO $
 propPerf :: Property
 propPerf = monadicIO $
   do
-    rngE <- QC.run $ mkUniformRNG $ Just Ecuyer
-    tE <- QC.run $ time $ nextVals rngE 100000
+    tE <- QC.run $ time $
+      fmap probaFromCount $
+        runStatUni (Just Ecuyer) $ allUStats 100000
 
-    rngM <- QC.run $ mkUniformRNG $ Just Mersenne
-    tM <- QC.run $ time $ nextVals rngM 100000
+    tM <- QC.run $ time $
+      fmap probaFromCount $
+        runStatUni (Just Mersenne) $ allUStats 100000
 
-    let res = tE < 0.3 && tM < 0.3
+    let res = tE < 0.4 && tM < 0.4
 
     unless res $ do
       QC.run $ printf "Time Mersenne: %0.9f sec" tM

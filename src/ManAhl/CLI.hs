@@ -58,22 +58,20 @@ parse xs = do
          then Just $ let (n, v) = break (== '=') xs in (n, tail v)
         else Nothing
 
-
 run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
-  rng <- mkUniformRNG $ Just rngT
-  let vals = nextVals rng nSims
-      stats = mkStatsUniform vals
+  res <- runStatUni (Just rngT) $ allUStats nSims
+  let stats = probaFromCount res
   return $
-    Right $ ResultUniform $ toList $ hsProba stats
+    Right $ ResultUniform $ toList stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
-  engine <- mkEngine pdfPillars $ Just rngT
-  return $ case engine of
-    Left s -> Left s
-    Right e -> let
-        vals = nextNums' e nSims
-        res = toList $ hsProba $ mkStatsWeighted vals
-      in Right $ ResultWeighted res
+  let p = mkEngineParams pdfPillars $ Just rngT
+  case p of
+    Left s -> return $ Left s
+    Right e -> do
+      res' <- runStatEngine e $ allStats nSims
+      let res = probaFromCount res'
+      return $ Right $ ResultWeighted $ toList res
 
 help :: [(String, String)]
 help = [
