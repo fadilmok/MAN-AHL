@@ -1,3 +1,4 @@
+-- | Module to run the various engines
 module ManAhl.Run (
   main
 ) where
@@ -8,6 +9,7 @@ import Control.Exception
 import System.Environment
 import Text.Printf
 
+-- | Main function to run the engine
 main :: IO()
 main = do
   args <- getArgs

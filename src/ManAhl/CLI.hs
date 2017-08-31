@@ -1,3 +1,4 @@
+-- | Module providing a Command Line Input API
 module ManAhl.CLI(
   parse,
   run,
@@ -16,9 +17,17 @@ import Data.List
 import Data.Maybe
 import Data.Map (toList)
 
+-- | Default pillars if not specified
 pillarsDefault :: PdfPillars
 pillarsDefault = [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
 
+-- | Query to Run from the parsed input,
+-- Computing the statistics for :
+-- Either a weighted distribution
+-- computed from the pillars for nSims and a selected uniform rng
+-- can be specified as well.
+-- Or a bounded uniform distribution given nSims and
+-- a selected uniform rng
 data Query =
       RunWeightedWith PdfPillars Int UniformRNGType
     | RunUniformWith Int UniformRNGType
@@ -27,14 +36,18 @@ instance NFData Query where
   rnf (RunWeightedWith p n u) = rnf p `seq` rnf n
   rnf (RunUniformWith n u) = rnf n
 
+-- The run type using either the weighted probability or
+-- uniform probability engine
 data RunType = Weighted | Uniform
   deriving (Show, Read)
 
+-- Encapsulated the Result of a run
 data Result =
    ResultWeighted [(Maybe Int, Double)]
   |ResultUniform  [(Double, Double)]
   deriving Show
 
+-- | Parse the input argument into a query.
 parse :: [String] -> Maybe Query
 parse xs = do
     args <- getArgs
@@ -58,6 +71,7 @@ parse xs = do
          then Just $ let (n, v) = break (== '=') xs in (n, tail v)
         else Nothing
 
+-- | Run a given query using the appropriate engine
 run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
   res <- runStatUni (Just rngT) $ allUStats nSims
@@ -73,6 +87,7 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
       let res = probaFromCount res'
       return $ Right $ ResultWeighted $ toList res
 
+-- | Give the CLI help
 help :: [(String, String)]
 help = [
     ("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
