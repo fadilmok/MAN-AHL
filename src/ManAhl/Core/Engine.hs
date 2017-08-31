@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -O2 #-}
 {-# LANGUAGE BangPatterns #-}
 -- | The weighted proba engine
 module ManAhl.Core.Engine(

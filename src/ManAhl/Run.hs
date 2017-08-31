@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -O2 #-}
 -- | Module to run the various engines
 module ManAhl.Run (
   main

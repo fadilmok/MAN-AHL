@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -O2 #-}
 {-# LANGUAGE BangPatterns #-}
 module ManAhl.Core.Random(
   -- * Creation
