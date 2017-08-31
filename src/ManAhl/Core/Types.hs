@@ -1,18 +1,18 @@
 {-# LANGUAGE BangPatterns #-}
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
-  -- * Random Numbers
-  EngineParams(..),
-  UniformRNGType(..),
-  UniformRNG(..),
+  -- * Engines
   ProbaUniEngine,
   StatUniEngine,
   ProbaWPEngine,
   StatWPEngine,
-  -- * Analytics
+  -- * Types
   CDF(..), PDF(..),
   PdfPillars,
   CdfPillars,
+  UniformRNGType(..),
+  UniformRNG(..),
+  EngineParams(..),
   Stats(..)
 ) where
 
@@ -48,7 +48,7 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
   deriving (Show, Eq)
 
 -- | Weighted Probability Engine
--- contains the PDF, CDF and Uniform RNG
+-- contains the PDF, CDF
 -- needed to compute the weighted probabilities
 data EngineParams = EngineParams {
     pdf     :: PDF
@@ -64,9 +64,13 @@ data Stats a = Stats {
    ,hsTotalCount  :: !Int
   } deriving Show
 
+-- | Bounded Uniform Probability Engine
 type ProbaUniEngine a = State UniformRNG a
+-- | Cumulative Statistic Engine for a Uniform distribution
 type StatUniEngine = StateT (Stats Double) (State UniformRNG) (Stats Double)
 
+-- | Weighted Probility Engine
 type ProbaWPEngine a = ReaderT EngineParams (State UniformRNG) a
+-- | Cumulative Statistic Engine for a Weighted distribution
 type StatWPEngine = ReaderT EngineParams (StateT (Stats (Maybe Int)) (State UniformRNG)) (Stats (Maybe Int))
 

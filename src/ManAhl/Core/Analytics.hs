@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections, RecordWildCards #-}
+-- | Module containing the simple analytics
 module ManAhl.Core.Analytics(
   mkPdf, mkCdf,
   inverseCdf,
@@ -12,6 +13,10 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import ManAhl.Core.Types
 
+-- | Creates discrete probability function.
+-- The pillars cannot be null, contain negative probability,
+-- the sum of the probability cannot exceed 1.
+-- The pillars with probability 0 are discarded.
 mkPdf :: PdfPillars -> Either String PDF
 mkPdf xs
   | null xs = Left "The pdf pillars are empty."
@@ -25,6 +30,9 @@ mkPdf xs
       foldl (\ m (v, p) -> if p == 0 then m else Map.insertWith (+) v p m)
         Map.empty xs
 
+-- | Create a discrete cumulative function,
+-- it assumes that the pdf is correct and
+-- fails if the cumulated probabilities are greater than 1.
 mkCdf :: PDF -> CDF
 mkCdf (PDF m) = CDF $
     Map.fromAscList $ reverse $ check $ Map.foldlWithKey go [] m
@@ -40,20 +48,26 @@ mkCdf (PDF m) = CDF $
       | p == 1 = vals
       | otherwise = error "Cumulative probabilities cannot exceed 1"
 
+-- | Inverse cdf function,
+-- it assumes that the inputs are between 0 and 1 and that
+-- the cdf is correct, it fails otherwise.
 inverseCdf :: CDF -> Double -> Maybe Int
 inverseCdf (CDF m) n
   = case n `Map.lookupGE` m of
-      Just (x, v) -> v
+      Just (_, v) -> v
       Nothing -> error $ "InverseCDF fails: " ++ show n ++ " CDF: " ++ show m
 
+-- | Compute the probabilities from the result distribution frequency
 probaFromCount :: Stats a -> Map a Double
 probaFromCount (Stats cs n)
   = Map.map (\ x -> fromIntegral x / fromIntegral n) cs
 
+-- | Compute the mean for a non empty list
 mean :: (Num a, Fractional a) => [a] -> a
 mean [] = error "The input list is empty"
 mean xs = sum xs / fromIntegral (length xs)
 
+-- | Compute the standard deviation for a non empty list
 stdDev :: (Num a, Floating a, Fractional a) => [a] -> a
 stdDev [] = error "The input list is empty"
 stdDev xs = sqrt $
