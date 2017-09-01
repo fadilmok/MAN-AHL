@@ -32,10 +32,9 @@ instance RandomGen UniformRNG where
   split (RandomMersenne rng) = let (g1, g2) = split rng in (RandomMersenne g1, RandomMersenne g2)
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
-mkUniformRNG :: Maybe UniformRNGType -> IO UniformRNG
-mkUniformRNG (Just Ecuyer)   = return . RandomEcuyer =<< newStdGen
-mkUniformRNG (Just Mersenne) = return . RandomMersenne =<< newPureMT
-mkUniformRNG Nothing         = mkUniformRNG $ Just Mersenne
+mkUniformRNG :: UniformRNGType -> IO UniformRNG
+mkUniformRNG Ecuyer   = return . RandomEcuyer =<< newStdGen
+mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 
 -- Compute bounded uniform probabilities
 runProbaUni :: UniformRNG -> ProbaUniEngine a -> a

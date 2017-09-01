@@ -40,7 +40,7 @@ propWeightedProba rT pdfP = monadicIO $
   do
     let e = case mkEngineParams pdfP of
          Left s -> error s; Right x -> x
-    rng <- QC.run $ mkUniformRNG $ Just rT
+    rng <- QC.run $ mkUniformRNG rT
     let stats = runStatEngine e rng $ allStats 1000000
     let pdf' = unPDF $ pdf e
         proba = probaFromCount stats
@@ -69,7 +69,7 @@ propPerf rT pdfP = monadicIO $
   do
     let e'= mkEngineParams pdfP
     let e = case e' of Left s -> error s; Right x -> x
-    rng <- QC.run $ mkUniformRNG $ Just rT
+    rng <- QC.run $ mkUniformRNG rT
     t <- QC.run $ time $
       probaFromCount $
         runStatEngine e rng $ allStats 100000

@@ -90,13 +90,13 @@ parse xs = do
 -- | Run a given query using the appropriate engine
 run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
-  rng <- mkUniformRNG $ Just rngT
+  rng <- mkUniformRNG rngT
   let res = runStatUni rng $ allUStats nSims
       stats = probaFromCount res
   return $
     Right $ ResultUniform res $ toList stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
-  rng <- mkUniformRNG $ Just rngT
+  rng <- mkUniformRNG rngT
   let p = mkEngineParams pdfPillars
   return $ case p of
     Left s -> Left s
