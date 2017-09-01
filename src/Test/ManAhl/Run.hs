@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -O2 #-}
 -- | Module to run all the testsuites
 module Test.ManAhl.Run (
   main
