@@ -90,6 +90,6 @@ allStats 0 = error "You need at least one element"
 allStats n = allStats' (n-1) nextStat
   where
     allStats' :: Int -> StatWPEngine -> StatWPEngine
-    allStats' 1 acc = acc
+    allStats' 0 acc = acc
     allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
 

@@ -83,7 +83,7 @@ allUStats 0 = error "You need at least one element"
 allUStats n = allStats' (n-1) nextUStat
   where
     allStats' :: Int -> StatUniEngine -> StatUniEngine
-    allStats' 1 acc = acc
+    allStats' 0 acc = acc
     allStats' !n acc = allStats' (n - 1) $ acc >> nextUStat
 
 -- | Range used to compute the statistics
