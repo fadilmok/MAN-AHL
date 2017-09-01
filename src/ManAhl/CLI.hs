@@ -47,24 +47,20 @@ data Result =
    ResultWeighted (Stats (Maybe Int)) [(Maybe Int, Double)]
   |ResultUniform  (Stats Double) [(Double, Double)]
 
-showList' :: (Show a, Show b) => [(a, b)] -> [String]
-showList' = map (\(x, p) -> show x ++ ";" ++ show p )
+showRes :: Show a => String -> Stats a -> [(a, Double)] -> String
+showRes name (Stats count n) proba = unlines $ [
+      "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
+     ,"Probabilities:"
+     ] ++ showList' proba
+     ++ ["", "Distribution:"]
+     ++ showList' (toList count)
+  where
+    showList' :: (Show a, Show b) => [(a, b)] -> [String]
+    showList' = map (\(x, p) -> show x ++ ";" ++ show p )
 
 instance Show Result where
-  show (ResultWeighted (Stats count n) proba) = unlines $ [
-      "Result Weighted Random Number Engine, " ++ show n ++ " random numbers."
-     ,"Probabilities:"
-     ]
-     ++ showList' proba
-     ++ ["", "Distribution:"]
-     ++ showList' (toList count)
-  show (ResultUniform (Stats count n) proba) = unlines $ [
-      "Result Uniform Random Number Engine, " ++ show n ++ " random numbers."
-     ,"Probabilities:"
-     ]
-     ++ showList' proba
-     ++ ["", "Distribution:"]
-     ++ showList' (toList count)
+  show (ResultWeighted stats proba) = showRes "Weighted" stats proba
+  show (ResultUniform stats proba) = showRes "Uniform" stats proba
 
 -- | Parse the input argument into a query.
 parse :: [String] -> Maybe Query
@@ -109,9 +105,9 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
 -- | Give the CLI help
 help :: [(String, String)]
 help = [
-    ("-help","")
+    ("-help","Produce this help.")
    ,("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
-   ,("-nSims=1000000", "Nb of sims")
+   ,("-nSims=1000000", "Number of random number generated")
    ,("-rng=Mersenne", "RNG type: Mersenne or Ecuyer")
    ,("-run=Weighted", "Run type: Weighted or Uniform")
   ]
