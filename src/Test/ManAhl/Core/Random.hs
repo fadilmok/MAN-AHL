@@ -15,69 +15,62 @@ import ManAhl.Core.Random
 import ManAhl.Core.Analytics
 
 -- | List of tests
-tests :: [(String, IO Bool)]
+tests :: TestSuite
 tests = [
-    ("Ecuyer Mean and Std",   Test.runWith 100 $ propMeanStd Ecuyer)
-   ,("Mersenne Mean And Std", Test.runWith 100 $ propMeanStd Mersenne)
-   ,("Ecuyer Bounds",         Test.runWith 100 $ propBounds Ecuyer)
-   ,("Mersenne Bounds",       Test.runWith 100 $ propBounds Mersenne)
-   ,("Mersenne Uniform",      Test.runWith 10 $ propUniform Mersenne)
-   ,("Ecuyer Uniform",        Test.runWith 10 $ propUniform Ecuyer)
-   ,("Uniform Mersenee Perf", Test.runWith 10 $ propPerf Mersenne)
-   ,("Uniform Ecuyer Perf",   Test.runWith 10 $ propPerf Ecuyer)
+    ("Ecuyer Mean and Std",   propMeanStd Ecuyer)
+   ,("Mersenne Mean And Std", propMeanStd Mersenne)
+   ,("Ecuyer Bounds",         propBounds Ecuyer)
+   ,("Mersenne Bounds",       propBounds Mersenne)
+   ,("Mersenne Uniform",      propUniform Mersenne)
+   ,("Ecuyer Uniform",        propUniform Ecuyer)
+   ,("Uniform Mersenee Perf", propPerf Mersenne)
+   ,("Uniform Ecuyer Perf",   propPerf Ecuyer)
   ]
 
 -- | Test that the standard deviation and mean of the uniform
 -- engine is constant.
-propMeanStd :: UniformRNGType -> Property
-propMeanStd rngT = monadicIO $ do
-  rng <- QC.run $ mkUniformRNG rngT
-  let vals = runProbaUni rng $ nextVals nRand
-      m = mean vals
-      std = stdDev vals
-      x ~= y = abs (x - y) <= 0.04
-      res = m ~= 0.5 && std ~= 0.28
-  unless res $
-    QC.run $ putStrLn $ "Mean: " ++ show m ++ " Std: " ++ show std ++ " ->"
-  assert res
+propMeanStd :: UniformRNGType -> Test
+propMeanStd rngT =
+  TestQCRng rngT $ \ rng ->
+    Test.runWith 100 $
+      let vals = runProbaUni rng $ nextVals nRand
+          m = mean vals
+          std = stdDev vals
+          x ~= y = abs (x - y) <= 0.04
+       in m ~= 0.5 && std ~= 0.28
 
 -- | Ensure that the uniform engine generate probilities within
 -- the expected bounds
-propBounds :: UniformRNGType -> Property
-propBounds rngT = monadicIO $ do
-  rng <- QC.run $ mkUniformRNG rngT
-  let vals = runProbaUni rng $ nextVals nRand
-  assert $
-    foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True vals
+propBounds :: UniformRNGType -> Test
+propBounds rngT =
+  TestQCRng rngT $ \ rng ->
+    Test.runWith 10 $
+      foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True $
+        runProbaUni rng $ nextVals nRand
 
 -- | Test the distribution of the uniform engine is uniform
-propUniform :: UniformRNGType -> Property
-propUniform rT = monadicIO $
-  do
-    rng <- QC.run $ mkUniformRNG rT
-    let stats = runStatUni rng $ allUStats nRand
-    let res =
-          Map.foldl (\ acc x ->
-            if not acc then False
+propUniform :: UniformRNGType -> Test
+propUniform rT =
+  TestQCRng rT $ \ rng ->
+    Test.runWith 10 $
+      let stats = runStatUni rng $ allUStats nRand in
+      Map.foldl (\ acc x ->
+        if not acc then False
               else round (x * 100) ==
                 round (100 / fromIntegral (Map.size $ hsCount stats))) True $
-             probaFromCount stats
-    unless res $ do
-      QC.run $ print stats
-    assert res
+        probaFromCount stats
 
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable
-propPerf :: UniformRNGType -> Property
-propPerf rT = monadicIO $
+propPerf :: UniformRNGType -> Test
+propPerf rT =
+  TestQCRng rT $ \ rng ->
+    Test.runWith 10 $ monadicIO $
   do
-    rng <- QC.run $ mkUniformRNG rT
     t <- QC.run $ time $
-        probaFromCount $ runStatUni rng $ allUStats 100000
-
+        probaFromCount $
+          runStatUni rng $ allUStats 100000
     let res = t < 0.4
-
     unless res $ do
       QC.run $ printf "Time %s: %0.9f sec" (show rT) t
-
     assert res

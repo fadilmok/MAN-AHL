@@ -1,16 +1,19 @@
 -- | Module providing the tool to run the tets
 module Test.ManAhl.QuickCheck(
   -- * Run
-  run, runWith,
+  run, runWith, runTest,
   -- * Constants
   nTests, nRand,
   -- * Tools
   failTest, time,
   -- * Generators
-  genPdfPillars
+  genPdfPillars,
+  -- * Type
+  TestSuite, Test(..)
 ) where
 
 import ManAhl.Core.Types
+import ManAhl.Core.Random
 
 import Control.Exception
 import Control.DeepSeq
@@ -18,6 +21,28 @@ import Control.Monad
 import System.CPUTime
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
+
+-- | TestSuite type
+type TestSuite = [(String, Test)]
+data Test =
+    TestQC                    (IO Bool)
+  | TestQCRng UniformRNGType  (UniformRNG -> IO Bool)
+  | TestPure                  (() -> Bool)
+  | TestIO                    (IO Bool)
+
+runTest :: Test -> IO Bool
+runTest (TestQC t) = t
+runTest (TestQCRng rT t) = do
+  r <- mkUniformRNG rT
+  t r
+runTest (TestPure t) = do
+  let res = t()
+  putStrLn $ " Test " ++ if res then "Passed" else "Failed"
+  return res
+runTest (TestIO t) = do
+  res <- t
+  putStrLn $ " Test " ++ if res then "Passed" else "Failed"
+  return res
 
 -- | Number of quickcheck tests
 nTests :: Int
@@ -37,16 +62,15 @@ runWith n p = fmap isSuccess $
   quickCheckWithResult stdArgs{ maxSuccess = n } p
 
 -- | Test if the input function raises an exception
-failTest :: IO() -> IO Bool
+failTest :: a -> IO Bool
 failTest f = do
   res' <- try $ do
-        f
+        evaluate f
         return False
 
   let res = case (res' :: Either SomeException Bool) of
               Left e -> True
               Right _ -> False
-  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
 
 -- | Time an IO action

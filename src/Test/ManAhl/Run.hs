@@ -9,6 +9,8 @@ import System.Exit (exitFailure)
 import Text.Printf
 import Test.QuickCheck
 
+import ManAhl.Core.Random
+import Test.ManAhl.QuickCheck (runTest)
 import qualified Test.ManAhl.Core.Analytics as Analytics
 import qualified Test.ManAhl.Core.Random as Random
 import qualified Test.ManAhl.Core.Engine as Engine
@@ -22,7 +24,9 @@ main = do
       Analytics.tests ++
       Random.tests ++
       Engine.tests
-    ) $ \ (s, t) -> printf "%-35s:" s >> t
+   ) $ \ (name, test) -> do
+           printf "%-35s:" name
+           runTest test
 
   unless (all (==True) success)
     exitFailure

@@ -5,20 +5,22 @@ module Test.ManAhl.CLI(
 
 import ManAhl.CLI
 import ManAhl.Core.Types
+import Test.ManAhl.QuickCheck hiding (run)
 
 import Control.Monad
 
 -- | Testsuite
-tests :: [(String, IO Bool)]
+tests :: TestSuite
 tests = [
     ("CLI Query", testQuery)
-   ,("CLI Run",            testRun)
+   ,("CLI Run",   testRun)
   ]
 
 -- | Test the creation of a query from the arguments
-testQuery :: IO Bool
-testQuery = do
-  let t1 = parse [] == Just (RunWeightedWith pillarsDefault 1000000 Mersenne)
+testQuery :: Test
+testQuery = TestPure $ const $ t1 && t2 && t3 && t4 && t5
+  where
+      t1 = parse [] == Just (RunWeightedWith pillarsDefault 1000000 Mersenne)
       t2 = parse ["-rng=Ecuyer"] ==
                 Just (RunWeightedWith pillarsDefault 1000000 Ecuyer)
       t3 = parse ["-rng=Ecuyer","-nSims=1"] ==
@@ -27,14 +29,10 @@ testQuery = do
                 Just (RunWeightedWith [(1, 0), (2, 1)] 1 Ecuyer)
       t5 = parse ["-rng=Ecuyer","-nSims=1","-run=Uniform"] ==
                 Just (RunUniformWith 1 Ecuyer)
-      res = t1 && t2 && t3 && t4 && t5
-
-  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
-  return res
 
 -- | Test a run for a given query
-testRun :: IO Bool
-testRun = do
+testRun :: Test
+testRun = TestIO $ do
   let q1 = RunWeightedWith [(1, 0.5), (2, 0.5)] 1000000 Mersenne
       q2 = RunUniformWith 1000000 Mersenne
 
@@ -57,5 +55,4 @@ testRun = do
     print $ "RunWeighted: " ++ show r1'
     print $ "RunUniform: " ++ show r2'
 
-  putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
