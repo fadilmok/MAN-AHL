@@ -70,11 +70,11 @@
 {\Huge\scshape Fadil Mokhchane \\ 
 \small \href{https://www.linkedin.com/in/fadil/}{LinkedIn} }\par
 \vspace{1cm}
-\includegraphics[width=0.2\textwidth]{img/harrington.jpg}\par
+\includegraphics[width=0.3\textwidth]{img/harrington.jpg}\par
 \vfill
-{\scshape \@date}\par
 \vspace*{2\drop}
-{\scshape \small Version 0.1}\par
+{\scshape September 1, 2017}\par
+{\scshape \small Version 1.0}\par
 \endgroup}
 \makeatother
 %% END Memoir customization
@@ -120,18 +120,20 @@ we may get the following results. As the results are random, these particular re
 \section{The Problem}
 We interpret the question as the following the mathematical problem. 
 We define a $X$ as a discrete random variable. 
-As input, we have a $k$ values, $x_i$, with their associated probabilities, $P_i$.
+As input, we have a $k$ values, $x_i$, with their associated probabilities, $p_i$.
 
 A discrete probability density function is a probability distribution charaterised 
-by a probability mass function :
-\[
-	\forall i \in \left[1 ...  k\right], P\left[ X = x_i \right] = P_i  
-\]
+by a probability mass function, c.f. \autoref{eq:pdf}, referenced as PDF.
+\begin{equation}
+	\forall i \in \left[1 ...  k\right], P\left[ X = x_i \right] = p_i  
+	\label{eq:pdf}
+\end{equation}
 With
 \[ 
 	\sum_{i = 1}^k  P\left[ X = x_i \right]  = 1
 \]
-This probability mass function can be illustrated \autoref{fig:distribution} :
+The values $\left(x_i, p_i\right)$ are called the PDF pillars.
+This probability mass function can be illustrated by \autoref{fig:distribution} :
 \begin{figure}[h!]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{img/distribution.png}
@@ -145,7 +147,8 @@ $P_i$.
 In order to make sure we generate $x_i$ with repesct to their original probabilities, 
 we need to add a no $x_i$ selected if the sum of the $x_i$ is less than $1$.
 
-This way we can build a discrete cumulative function for $X$, $F_x$, such as :
+This way we can build a discrete cumulative function, referenced as CDF,
+ for $X$, $F_x$, such as :
 \begin{equation}
 	F_x = P\left( X \leq x \right)
 	\label{eq:cdf}
@@ -159,30 +162,52 @@ Which can be illustrated with \autoref{fig:cdf2} :
 \end{center}
 \end{figure}
 
-We then use a normal distribution to generate a number between $0$ and $1$.
-\[
-	f_x = \frac{1}{\sqrt{2 \pi}} e^{\frac{x^2}{2}}
-\]
-Using our discrete cumulative function, in \autoref{eq:cdf}, we can pick an $x_i$.
-The probability density of the normal distribution with mean $0$ and variance $1$ is:
+We then use a bounded uniform distribution, $U\left(0,1\right)$,
+to generate random numbers between $0$ and $1$.
+We picked two pseudo random numbers generator : Mersenne Twister\footnote{
+The Mersenne twister is a pseudorandom number generator developed by 
+Makoto Matsumoto and Takuji Nishimura that is based on a matrix linear 
+recurrence over a finite binary field. It provides for fast generation of 
+very high quality pseudorandom numbers. 
+It has a period of $2^63-1$.
+The source for the C code can be found 
+\href{http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt64.html}{here}.
+} and Ecuyer\footnote{
+This is the default random number generator in haskell one in haskell.
+ This implementation uses the Portable Combined Generator of L'Ecuyer
+ for 32-bit computers, transliterated by Lennart Augustsson. 
+ It has a period of roughly $2.30584e18$.
+ This implementation claims to be faster than Ecuyer's one.
+ } in order to compare and pick the best one.
+
+Finally using the inverse of the discrete cumulative function, reference as Inverse CDF, 
+we can pick an $x_i$, described in \autoref{eq:invcdf}.
+\begin{equation}
+	\forall y \in \left[0...1 \right], F^{-1}_y = x_i
+	\label{eq:invcdf}
+\end{equation}
+This process gives us a weighted probability pseudo random number generator.
 
 \section{Solution Proposed}
 \subsection{Overview}
 
 The key requirement is to deliver a production quality software.
-This means that the code has to be well designed, efficient, portable and well tested.
+This means that the code has to be well designed, simple, 
+efficient, portable and well tested.
 
-The key features we would like to implement are:
+The key features we would like to achieve :
 \begin{itemize}
-	\item Implement the generator,
+	\item Implement the weighted probability engine based
+	on a uniform random probability generator,
 	\item Create an User Interface, via Command Line Input,
+	\item Assess the quality of our weighted probability engine,
 	\item Compare various pseudo random number generator,
 	\item Target $100\%$ testing coverage.
 	\item Document the work.
 \end{itemize}
 
 \subsection{Design}
-Hence we target the following archictecture, c.f. \autoref{fig:architecture1}.
+We target the following archictecture, c.f. \autoref{fig:architecture1}.
 \begin{figure}[h!]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{img/architecture1.png}
@@ -193,22 +218,239 @@ Hence we target the following archictecture, c.f. \autoref{fig:architecture1}.
 The various modules implement all the functionalities we need.
 \begin{description}
 	\item[Analytics] The mathematical functions required,
-	\item[Engine] 	The various random numbers generator,
-	\item[CLI] 		The command line input module,
-	\item[Testing] 	The testing module. 
+	
+	In this module we have the implementation of the discrete 
+	probability function\footnote{
+	We can take as input incomplete probabilities, i.e. that
+	don't sum up to $1$. We therefore assign the remaining
+	probability to the event we don't select any element.
+	Haskell provides the \emph{Maybe a} type to modelise this.
+	}, the discrete cumulative function, 
+	the inverse discrete cumulative function and the mean and
+	standard deviation functions.
+	
+	\item[Random]	The uniform pseudo random numbers generator,
+	
+	This module contains an abstraction to a uniform pseudo
+	random number generator with values within $ \left[ 0, 1 \right]$.
+	It can compute a random number or a series of random 
+	number and the statistics related to the distribution of 
+	the random number generated.
+	\item[Engine] 	The weighted probability engine,
+	
+	This module includes an abstraction to the weighted 
+	pseudo random numbers generators.
+	It allows computation and statistics on these numbers.
+	It inluce the requested nextNum function.
+	\item[CLI] 		The command line input layer,
+	
+	As it is meaningless to look only at one random number at the time.
+	The CLI provides a flexible API to compute $n$ random numbers.
+	We can select any random number we have implemented.
+	We display only the distribution of these random numbers.
+	\item[Testing] 	The testing module,
+	
+	This module provides all the automated tests. They are unit 
+	tests at the module level and integration tests at the key
+	features level.
 \end{description}
 
-\subsection{Testing}
+
+\subsection{UI}
+The UI is a command line input allowing the user to run each feature.
+After building the project, with the following command:
+\begin{verbatim}
+cabal build
+\end{verbatim}
+The binary is located in \emph{./dist/build/MAN-AHL/MAN-AHL}.
+We can run weighted engine or the unform generator
+ as described in \autoref{fig:cli}, with the following command:
+\begin{verbatim}
+time ./dist/build/MAN-AHL/MAN-AHL -run=Weighted -nSims=1000000
+\end{verbatim}
+ The binary has the option \emph{-help}, stating all the default values.
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=1\textwidth]{img/cli.png}
+\caption{Command Line Input}
+\label{fig:cli}
+\end{center}
+\end{figure}
+
+
+\section{Implementation}
+
+
+\section{Automated Unit and Integration Testing}
 We need to test each module independtly, i.e. unit testing, and when they 
 are all used together, i.e. integration testing.
 
-Due to our limited testing environment, c.f. \autoref{apx:testing.env},
-we limit ourselves to the following tests.
+The testing environment used is described in below\footnote{
+Given that I don't have access to my server, 
+we run the tests on a MacBook Pro 2008 4GB DDR3 Intel Core Duo 2.53GHz.
+It has 250GB harddisk, not SSD. 
+We are using Haskell version 8.2.1 on MacOS. Vim version 8.0.
+}.
 
-\emph{TBC}
+We use heavily a random testing library, i.e. QuickCheck\footnote{
+QuickCheck is a library for random testing of program properties.
+The API is described 
+\href{http://hackage.haskell.org/package/QuickCheck-2.10.0.1/docs/Test-QuickCheck.html}{here}.
+}, to test comprehensively the software.
+Automated pseudo random tests allowed to discover issues and
+test cases that were not included at first.
 
-\subsection{UI}
-The UI is command line input allowing the user to run each feature.
+Our test data is mostly pseudo random: 
+PDF pillars, PDF, CDF and Inverse CDF inputs.
+
+We can run the automated as described in  \autoref{fig:tests} with the command:
+\begin{verbatim}
+time cabal test --show-details=streaming
+\end{verbatim}
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=1\textwidth]{img/tests.png}
+\caption{Automated Testing}
+\label{fig:tests}
+\end{center}
+\end{figure}
+
+The following Test Suites, i.e. lists of tests, compose our test plan split by modules.
+
+\subsection{Test Data}
+
+The key sample used throughout the testing is the generation of PDF pillars.
+We tried to pick a realistic sample.
+
+The pillars can have 1 to 10 pillars. Their summed probability are always less 
+than or equal to 1.  Each probability is within the $[0.01, 1]$ bound.
+
+\subsection{Analytics Testing} 
+These are the unit tests for the Analytics only.
+\begin{description}
+	\item [CDF creation]
+		Given a 1000 pseudo random PDF, we ensure 
+		that the last pillar of the CDF is 1.
+		As the CDF is build incrementally, this gives a good sense that
+		the CDF construction has been correct.
+	\item [CDF and PDF pillars check]
+		Given a 1000 pseudo random PDF, we ensure that
+		the pillars on the x axis of the PDF are the pillars on the y
+		axis of the CDF.
+	\item [PDF Stable]
+		Given a 1000 pseudo random PDF pillars, 
+		we ensure that we get the same PDF given the reverse input.
+	\item [PDF consistency]
+		Given a 1000 pseudo random PDF, 
+		we ensure that the sum of the PDF pillars probabilities are 
+		less than 1. We indeed modelise the non selected element
+		only in the CDF.
+	\item [Inverse CDF valid]
+		Given a 1000 pseudo random PDF,
+		we build the CDF and we ensure that for a random number of
+		x values within 0 and 1 we always recover a x pillars of the PDF.
+	\item [PDF Failure]
+		We test the expecture failure of the PDF construction. 
+		We can't have negative values. We need at least one valid pillar.
+		The pillars with 0 probabilities are discarded.
+		And the sum of the PDF pillars probabilities must be less or
+		equal to one.
+	\item [CDF Failure]
+		 The CDF construction always assume a correct PDF as
+		 input. If it is not the case, it fails if the aggregated 
+		 probabilities are greater than 1.
+		 The test ensure an exception is raised.
+	\item [Inverse CDF Failure]
+		We check that the inverse CDF function raise an
+		exception if the x input is outside the correct bounds, 
+		$\left[0, 1\right]$.
+	\item [Mean and Standard Deviation Failure]
+		These functions raise an exception for empty lists.
+		We test it automatically.
+	\item [PDF and CDF Non Regression]
+		We ensure without randomness that given a set of pillars,
+		we recover the expected CDF and PDF.
+\end{description}
+\subsection{Random Testing} 
+
+These are the unit tests for the uniform pseudo random generator.
+	
+\begin{description}
+	\item [Mean and Standard Deviation]
+		Given a large number of random number generated for
+		both Ecuyer and Mersenne, i.e. $100000$.
+		We ensure that the mean and the standard deviation 
+		of the distributions are still the same. Run 100 times.
+	\item [Bounds]
+		Test ensuring that the uniform pseudo random generators
+		generate probabilities with the $[0, 1]$ bound.
+		Run $100$ times for $100000$ random numbers.
+	\item [Uniform]
+		Ensure that the ditributions generated are uniform.
+		Run 10 times for $100000$ random numbers.
+	\item [Performance]
+		Ensure that the pseudo random numbers keep at
+		least the same performance.
+		Run 10 times for $100000$ random numbers.
+\end{description}
+
+\subsection{Engine Testing} 
+These are the unit tests for the weighted pseudo random engine.
+All tests are run using the two available uniform pseudo random
+generators. 
+These are like the integration tests as they use most of the library.
+\begin{description}
+	\item [Distribution check]
+		We check that we recover the PDF distribution from
+		a sample of 1000000 at $0.5\%$ precision.
+		We run this for 10 pseudo random PDF.
+	\item [Engine Fail]
+		Ensure that the construction of the engine 
+		handles all the expected failure.
+	\item [Performance]
+		Ensure that the engine keep at least the same performance.
+		Run 10 times for $100000$ random  numbers	
+\end{description}	
+
+\subsection{CLI Testing}
+We test that the API produce what is expected.
+\begin{description}
+	\item [Query]
+	We test that given an argument list, we produce the expected
+	Query.
+	\item[Run]
+	We test that for given a Query, we produce the expected Result.
+\end{description}
+
+\section{Qualitative Testing}
+
+\section{Performance Testing}
+
+\section{Extension}
+Here is a list of possible extension we could add.
+\begin{description}
+	\item [Testing]
+	Add some qualitative testing, by displaying the distribution generated 
+	by the random number generators.
+	
+	Run the tests on different environments to ensure the portability of 
+	the code.
+	\item [UI] 
+	A nice extension would be to add a Graphic User Interface,
+	using the library 
+	\href{https://hackage.haskell.org/package/threepenny-gui}{threepenny-gui}
+	to create a portable Web application.
+	
+	Also we could integrate a plot library to display the distribution of 
+	random numbers.
+	\item[Database]
+	We could add features to store and retrieve the results.
+	\item[Continuous Integration]
+	The fact that we tested only Mac OS, c.f. \autoref{apx:testing.env} is 
+	not production like.
+	We would like to run on various environment, a simple extension would 
+	be to run on Travis and AppVeyor website accessible via GitHub.
+\end{description}
 
 %-------------------------------------------------------------------------------
 \newpage
@@ -286,99 +528,36 @@ We can solve the problem by running a query like:
         ]
 SELECT p.name
 FROM  (
-   SELECT product_id, name FROM product 
-      WHERE available_from >=  (today - 1 month)
+   SELECT product_id, name FROM Product 
+      WHERE available_from <=  (today - 1 month)
 ) p
-INNER JOIN (
-   SELECT product_id, SUM(quantity) nb FROM orders
+LEFT OUTER JOIN (
+   SELECT product_id, SUM(quantity) nb FROM Orders
+      WHERE dispatch_date >= (today - 1 year)
       GROUP BY product_id
-      WHERE dispatch_date <= (today - 1 year)
+      HAVING nb < 10
 ) o
    ON p.product_id = o.product_id
-WHERE 
-   o.nb < 10
 \end{lstlisting}
 
-The key issue here in order to produce a production-like quality is 
-to test the query proposed.
+Adding indexes to the columns on which we join and maybe query would improve 
+the performance. 
+A query plan of the execution would indicate what is the best design for this 
+database scheme.
 
-\subsection{Overview}
-We will extend our App by adding a database layer to create and query 
-the tables.
-We extend also our testing layer to create datasets in order to test
-the accuracy and efficiency of our query.
 
-\subsection{Design}
-Hence we target the following archictecture, c.f. \autoref{fig:architecture2}.
-\begin{figure}[h!]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/architecture2.png}
-\caption{SQL App Architecture}
-\label{fig:architecture2}
-\end{center}
-\end{figure}
-
-\subsection{Testing}
-We unfortunately lack the production tools to analyse the query execution.
-Without the access to the query plan of execution, we can only on our
-experience and empirical tests to create the best query possible.
-
-Therefore we have simple datasets to test the limiting cases and 
-large datasets to test the performance of our query.
-
-We have access to a limited hardware, c.f. \autoref{apx:testing.env}, 
-therefore the performance are slow.
-
-\subsection{UI}
-We extend the CLI to include the following command :
-\begin{description}
-	\item[TBC] ...
-\end{description}
-
-%-------------------------------------------------------------------------------
-\newpage
-\chapter{Discussion}
-\section{Implementation}
-In order to understand and share the creation process, 
-we share the Git log in \autoref{apx:git.log}. 
-Having a git log allows also rolling back changes, if needed.
-
-We tried to follow a Test Driven Development process as 
-demonstrated by the Git log.
-
-\section{Testing}
-The testing environment is described in \autoref{apx:testing.env}.
-
-\section{Extension}
-Here is a list of possible extension we could add.
-\begin{description}
-	\item [Testing]
-	Add some qualitative testing, by displaying the distribution generated 
-	by the random number generators.
-	
-	Run the tests on different environments to ensure the portability of 
-	the code.
-	\item [UI] 
-	A nice extension would be to add a Graphic User Interface,
-	using the library 
-	\href{https://hackage.haskell.org/package/threepenny-gui}{threepenny-gui}
-	to create a portable Web application.
-	
-	Also we could integrate a plot library to display the distribution of 
-	random numbers.
-	\item[Database]
-	We could add features to store and retrieve the results.
-	\item[Continuous Integration]
-	The fact that we tested only Mac OS, c.f. \autoref{apx:testing.env} is 
-	not production like.
-	We would like to run on various environment, a simple extension would 
-	be to run on Travis and AppVeyor website accessible via GitHub.
-\end{description}
 
 %-------------------------------------------------------------------------------
 \newpage
 \appendix
 \addcontentsline{toc}{chapter}{Appendices}
+
+\chapter{Code} \label{apx:code}
+We provide below the code.
+
+
+%-------------------------------------------------------------------------------
+\newpage
 \chapter{Installation} \label{apx:installation}
 
 Here are the steps to install the App.
@@ -397,29 +576,4 @@ Here are the steps to install the App.
 	cabal install TBC
 \end{lstlisting}
 \end{enumerate}
-
-%-------------------------------------------------------------------------------
-\newpage
-\chapter{Testing Environment} \label{apx:testing.env}
-
-Given that I don't have access to my server this week, 
-we run the test on a MacBook Pro 2008 4GB DDR3 Intel Core Duo 2.53GHz.
-It has 250GB harddisk, not SSD. 
-
-We are using Haskell version 8.2.1 on MacOS.
-
-%-------------------------------------------------------------------------------
-\newpage
-\chapter{Haskell Libraries} \label{apx:haskell.libraries}
-
-%-------------------------------------------------------------------------------
-\newpage
-\chapter{Git Log} \label{apx:git.log}
-We provide below the git log, as we are simulating a production environment.
-
-%-------------------------------------------------------------------------------
-\newpage
-\chapter{Code} \label{apx:code}
-We provide below the code.
-
 \end{document}
