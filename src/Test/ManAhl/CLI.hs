@@ -39,14 +39,14 @@ testRun = do
       q2 = RunUniformWith 1000000 Mersenne
 
   r1' <- run q1
-  let r1 = either (const False) ( \ (ResultWeighted r) ->
+  let r1 = either (const False) ( \ (ResultWeighted _ r) ->
           foldl (\ acc (_, x) ->
             if not acc then False
               else round (x * 100) == 50) True r
           ) r1'
 
   r2' <- run q2
-  let r2 = either (const False) (\ (ResultUniform r) ->
+  let r2 = either (const False) (\ (ResultUniform _ r) ->
           foldl (\ acc (_, x) ->
             if not acc then False
               else round (x * 100) ==

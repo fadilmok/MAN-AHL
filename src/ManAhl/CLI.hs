@@ -36,15 +36,16 @@ instance NFData Query where
   rnf (RunWeightedWith p n u) = rnf p `seq` rnf n
   rnf (RunUniformWith n u) = rnf n
 
--- The run type using either the weighted probability or
+-- | The run type using either the weighted probability or
 -- uniform probability engine
 data RunType = Weighted | Uniform
   deriving (Show, Read)
 
--- Encapsulated the Result of a run
+-- | Encapsulated the Result of a run
+-- its statistics and probabilities
 data Result =
-   ResultWeighted [(Maybe Int, Double)]
-  |ResultUniform  [(Double, Double)]
+   ResultWeighted (Stats (Maybe Int)) [(Maybe Int, Double)]
+  |ResultUniform  (Stats Double) [(Double, Double)]
   deriving Show
 
 -- | Parse the input argument into a query.
@@ -77,7 +78,7 @@ run (RunUniformWith nSims rngT) = do
   res <- runStatUni (Just rngT) $ allUStats nSims
   let stats = probaFromCount res
   return $
-    Right $ ResultUniform $ toList stats
+    Right $ ResultUniform res $ toList stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
   let p = mkEngineParams pdfPillars $ Just rngT
   case p of
@@ -85,7 +86,7 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
     Right e -> do
       res' <- runStatEngine e $ allStats nSims
       let res = probaFromCount res'
-      return $ Right $ ResultWeighted $ toList res
+      return $ Right $ ResultWeighted res' $ toList res
 
 -- | Give the CLI help
 help :: [(String, String)]
