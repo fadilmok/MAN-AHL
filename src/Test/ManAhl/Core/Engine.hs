@@ -32,7 +32,8 @@ tests = [
         Test.runWith 10 $ forAll genPdfPillars $ propPerf Ecuyer)
   ]
 
--- | Test taking a random
+-- | Test that we recover the input probabilities
+-- using random pdf pillars as input
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
 propWeightedProba rT pdfP = monadicIO $
   do
@@ -47,6 +48,8 @@ propWeightedProba rT pdfP = monadicIO $
       QC.run $ print diff
     assert res
 
+-- | Test that EngineParams fails to build for all
+-- expected cases
 testEngineFail :: IO Bool
 testEngineFail = do
   let negativePro = isLeft $ mkEngineParams [(1, -1)] Nothing
@@ -58,6 +61,7 @@ testEngineFail = do
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
   return res
 
+-- | Test that the performance of the Engine remain acceptable
 propPerf :: UniformRNGType -> PdfPillars -> Property
 propPerf rT pdfP = monadicIO $
   do

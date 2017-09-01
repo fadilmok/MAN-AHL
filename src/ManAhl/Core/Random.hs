@@ -86,5 +86,6 @@ allUStats n = allStats' (n-1) nextUStat
     allStats' 1 acc = acc
     allStats' !n acc = allStats' (n - 1) $ acc >> nextUStat
 
+-- | Range used to compute the statistics
 statRange :: Map Double Int
 statRange = Map.fromList $ zip (map (/100) [1, 2 .. 100]) [0..]

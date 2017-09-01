@@ -58,6 +58,8 @@ time f = do
   end <- getCPUTime
   return $ fromIntegral (end - start) / 10^12
 
+-- | QuickCheck generator to build pseudo random PDF pillars
+-- We ensure that they are correct pillars.
 genPdfPillars :: Gen PdfPillars
 genPdfPillars = do
     n <- choose (1, 10) :: Gen Int

@@ -1,3 +1,4 @@
+-- | Module testing the Command line input
 module Test.ManAhl.CLI(
   tests
 ) where
@@ -5,11 +6,13 @@ module Test.ManAhl.CLI(
 import ManAhl.CLI
 import ManAhl.Core.Types
 
+-- | Testsuite
 tests :: [(String, IO Bool)]
 tests = [
     ("CLI Query creation", testQuery)
   ]
 
+-- | Test the creation of a query from the arguments
 testQuery :: IO Bool
 testQuery = do
   let t1 = parse [] == Just (RunWeightedWith pillarsDefault 1000000 Mersenne)
