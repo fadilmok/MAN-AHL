@@ -30,9 +30,10 @@ tests = [
 -- | Test that the standard deviation and mean of the uniform
 -- engine is constant.
 propMeanStd :: UniformRNGType -> Property
-propMeanStd rng = monadicIO $ do
-  vals <- QC.run $ runProbaUni (Just rng) $ nextVals nRand
-  let m = mean vals
+propMeanStd rngT = monadicIO $ do
+  rng <- QC.run $ mkUniformRNG $ Just rngT
+  let vals = runProbaUni rng $ nextVals nRand
+      m = mean vals
       std = stdDev vals
       x ~= y = abs (x - y) <= 0.04
       res = m ~= 0.5 && std ~= 0.28
@@ -43,8 +44,9 @@ propMeanStd rng = monadicIO $ do
 -- | Ensure that the uniform engine generate probilities within
 -- the expected bounds
 propBounds :: UniformRNGType -> Property
-propBounds rng = monadicIO $ do
-  vals <- QC.run $ runProbaUni (Just rng) $ nextVals nRand
+propBounds rngT = monadicIO $ do
+  rng <- QC.run $ mkUniformRNG $ Just rngT
+  let vals = runProbaUni rng $ nextVals nRand
   assert $
     foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True vals
 
@@ -52,7 +54,8 @@ propBounds rng = monadicIO $ do
 propUniform :: UniformRNGType -> Property
 propUniform rT = monadicIO $
   do
-    stats <- QC.run $ runStatUni (Just rT) $ allUStats nRand
+    rng <- QC.run $ mkUniformRNG $ Just rT
+    let stats = runStatUni rng $ allUStats nRand
     let res =
           Map.foldl (\ acc x ->
             if not acc then False
@@ -68,9 +71,9 @@ propUniform rT = monadicIO $
 propPerf :: UniformRNGType -> Property
 propPerf rT = monadicIO $
   do
+    rng <- QC.run $ mkUniformRNG $ Just rT
     t <- QC.run $ time $
-      fmap probaFromCount $
-        runStatUni (Just rT) $ allUStats 100000
+        probaFromCount $ runStatUni rng $ allUStats 100000
 
     let res = t < 0.4
 

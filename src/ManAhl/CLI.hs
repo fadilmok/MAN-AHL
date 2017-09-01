@@ -47,6 +47,7 @@ data Result =
    ResultWeighted (Stats (Maybe Int)) [(Maybe Int, Double)]
   |ResultUniform  (Stats Double) [(Double, Double)]
 
+-- | Helper to display the Results nicely
 showRes :: Show a => String -> Stats a -> [(a, Double)] -> String
 showRes name (Stats count n) proba = unlines $ [
       "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
@@ -89,18 +90,20 @@ parse xs = do
 -- | Run a given query using the appropriate engine
 run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
-  res <- runStatUni (Just rngT) $ allUStats nSims
-  let stats = probaFromCount res
+  rng <- mkUniformRNG $ Just rngT
+  let res = runStatUni rng $ allUStats nSims
+      stats = probaFromCount res
   return $
     Right $ ResultUniform res $ toList stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
-  let p = mkEngineParams pdfPillars $ Just rngT
-  case p of
-    Left s -> return $ Left s
-    Right e -> do
-      res' <- runStatEngine e $ allStats nSims
-      let res = probaFromCount res'
-      return $ Right $ ResultWeighted res' $ toList res
+  rng <- mkUniformRNG $ Just rngT
+  let p = mkEngineParams pdfPillars
+  return $ case p of
+    Left s -> Left s
+    Right e -> let
+      res' = runStatEngine e rng $ allStats nSims
+      res = probaFromCount res'
+      in Right $ ResultWeighted res' $ toList res
 
 -- | Give the CLI help
 help :: [(String, String)]

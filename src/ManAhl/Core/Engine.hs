@@ -27,34 +27,32 @@ import qualified Data.Map as Map
 -- | Create a weighted probability engine parameters
 -- The creation can fail if the pdf pillars are incorrect.
 --
-mkEngineParams :: PdfPillars -> Maybe UniformRNGType -> Either String EngineParams
-mkEngineParams pdfP rT =
+mkEngineParams :: PdfPillars -> Either String EngineParams
+mkEngineParams pdfP =
   either
       (\ msg -> Left msg)
       (\ p -> Right EngineParams {
         pdf = p
        ,cdf = mkCdf p
-       ,uniRngT = rT
      }) $ mkPdf pdfP
 
 -- | Compute the weighted probabilities
-runProbaEngine :: EngineParams -> ProbaWPEngine a -> IO a
-runProbaEngine p e = do
-  uniRng <- mkUniformRNG $ uniRngT p
-  return $ flip evalState uniRng $ runReaderT e p
+runProbaEngine :: EngineParams -> UniformRNG -> ProbaWPEngine a -> a
+runProbaEngine p uniRng e =
+  flip evalState uniRng $
+    runReaderT e p
 
 -- | Compute the cumulative statistic for the weighted probabilities
-runStatEngine :: EngineParams -> StatWPEngine -> IO (Stats (Maybe Int))
-runStatEngine p e = do
-  uniRng <- mkUniformRNG $ uniRngT p
-  return $ flip evalState uniRng $
+runStatEngine :: EngineParams -> UniformRNG -> StatWPEngine -> Stats (Maybe Int)
+runStatEngine p uniRng e =
+  flip evalState uniRng $
     flip evalStateT (Stats Map.empty 0) $
       runReaderT e p
 
 -- | Engine to compute the next weighted probability
 nextNum :: ProbaWPEngine (Maybe Int)
 nextNum = do
-  EngineParams _ cdf _ <- ask
+  EngineParams _ cdf <- ask
   uniRng <- get
   let (!x, !r) = runState nextVal uniRng
   put r
@@ -68,7 +66,7 @@ nextNums n = replicateM n nextNum
 -- | Engine to compute the next cumulative statistics
 nextStat :: StatWPEngine
 nextStat = do
-  EngineParams _ cdf _ <- ask
+  EngineParams _ cdf <- ask
   uniRng <- lift $ lift get
   let (!x, !r) = runState nextVal uniRng
   lift $ lift $ put r
@@ -87,7 +85,7 @@ nextStat = do
 -- It fails if n is 0
 allStats :: Int -> StatWPEngine
 allStats 0 = error "You need at least one element"
-allStats n = allStats' (n-1) nextStat
+allStats n = allStats' (n - 1) nextStat
   where
     allStats' :: Int -> StatWPEngine -> StatWPEngine
     allStats' 0 acc = acc

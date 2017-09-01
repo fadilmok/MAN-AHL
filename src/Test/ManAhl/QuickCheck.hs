@@ -50,10 +50,10 @@ failTest f = do
   return res
 
 -- | Time an IO action
-time :: NFData t => IO t -> IO Double
+time :: NFData t => t -> IO Double
 time f = do
   start <- getCPUTime
-  x <- f
+  x <- evaluate f
   rnf x `seq` return()
   end <- getCPUTime
   return $ fromIntegral (end - start) / 10^12

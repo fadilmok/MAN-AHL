@@ -9,6 +9,7 @@ import Test.ManAhl.QuickCheck as Test
 
 import ManAhl.Core.Types
 import ManAhl.Core.Engine
+import ManAhl.Core.Random
 import ManAhl.Core.Analytics
 
 import Control.Monad
@@ -37,9 +38,10 @@ tests = [
 propWeightedProba :: UniformRNGType -> PdfPillars -> Property
 propWeightedProba rT pdfP = monadicIO $
   do
-    let e' = mkEngineParams pdfP $ Just rT
-    let e = case e' of Left s -> error s; Right x -> x
-    stats <- QC.run $ runStatEngine e $ allStats 1000000
+    let e = case mkEngineParams pdfP of
+         Left s -> error s; Right x -> x
+    rng <- QC.run $ mkUniformRNG $ Just rT
+    let stats = runStatEngine e rng $ allStats 1000000
     let pdf' = unPDF $ pdf e
         proba = probaFromCount stats
         diff = Map.mapWithKey (\ v p -> abs (proba ! Just v - p)) pdf'
@@ -52,10 +54,10 @@ propWeightedProba rT pdfP = monadicIO $
 -- expected cases
 testEngineFail :: IO Bool
 testEngineFail = do
-  let negativePro = isLeft $ mkEngineParams [(1, -1)] Nothing
-      nullPro = isLeft $ mkEngineParams [] Nothing
-      nullPro2 = isLeft $ mkEngineParams [(1,0)] Nothing
-      greaterPro = isLeft $ mkEngineParams [(1, 0.4), (2, 0.5), (3, 0.4)] Nothing
+  let negativePro = isLeft $ mkEngineParams [(1, -1)]
+      nullPro = isLeft $ mkEngineParams []
+      nullPro2 = isLeft $ mkEngineParams [(1,0)]
+      greaterPro = isLeft $ mkEngineParams [(1, 0.4), (2, 0.5), (3, 0.4)]
       res = negativePro && nullPro && greaterPro && nullPro2
 
   putStrLn $ "Test " ++ if res then "Passed" else "FAILED"
@@ -65,11 +67,12 @@ testEngineFail = do
 propPerf :: UniformRNGType -> PdfPillars -> Property
 propPerf rT pdfP = monadicIO $
   do
-    let e'= mkEngineParams pdfP $ Just rT
+    let e'= mkEngineParams pdfP
     let e = case e' of Left s -> error s; Right x -> x
+    rng <- QC.run $ mkUniformRNG $ Just rT
     t <- QC.run $ time $
-      fmap probaFromCount $
-        runStatEngine e $ allStats 100000
+      probaFromCount $
+        runStatEngine e rng $ allStats 100000
 
     let res = t < 0.4
 

@@ -53,7 +53,6 @@ newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
 data EngineParams = EngineParams {
     pdf     :: PDF
    ,cdf     :: !CDF
-   ,uniRngT :: Maybe UniformRNGType
   }
 
 -- | Statistic of a given Run [a]

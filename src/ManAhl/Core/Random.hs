@@ -38,17 +38,14 @@ mkUniformRNG (Just Mersenne) = return . RandomMersenne =<< newPureMT
 mkUniformRNG Nothing         = mkUniformRNG $ Just Mersenne
 
 -- Compute bounded uniform probabilities
-runProbaUni :: Maybe UniformRNGType -> ProbaUniEngine a -> IO a
-runProbaUni rT e = do
-  uniRng <- mkUniformRNG rT
-  return $ evalState e uniRng
+runProbaUni :: UniformRNG -> ProbaUniEngine a -> a
+runProbaUni r e = evalState e r
 
 -- Compute the cumulative statistics for the uniform probabilities
-runStatUni :: Maybe UniformRNGType -> StatUniEngine -> IO (Stats Double)
-runStatUni rT e = do
-  uniRng <- mkUniformRNG rT
-  return $ flip evalState uniRng $
-    evalStateT e (Stats statRange 0)
+runStatUni :: UniformRNG -> StatUniEngine -> Stats Double
+runStatUni r e =
+  flip evalState r $
+    evalStateT e $ Stats statRange 0
 
 -- | Engine to compute the next bounded uniform probability
 nextVal :: ProbaUniEngine Double
