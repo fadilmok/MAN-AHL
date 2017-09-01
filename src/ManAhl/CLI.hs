@@ -46,7 +46,25 @@ data RunType = Weighted | Uniform
 data Result =
    ResultWeighted (Stats (Maybe Int)) [(Maybe Int, Double)]
   |ResultUniform  (Stats Double) [(Double, Double)]
-  deriving Show
+
+showList' :: (Show a, Show b) => [(a, b)] -> [String]
+showList' = map (\(x, p) -> show x ++ ";" ++ show p )
+
+instance Show Result where
+  show (ResultWeighted (Stats count n) proba) = unlines $ [
+      "Result Weighted Random Number Engine, " ++ show n ++ " random numbers."
+     ,"Probabilities:"
+     ]
+     ++ showList' proba
+     ++ ["", "Distribution:"]
+     ++ showList' (toList count)
+  show (ResultUniform (Stats count n) proba) = unlines $ [
+      "Result Uniform Random Number Engine, " ++ show n ++ " random numbers."
+     ,"Probabilities:"
+     ]
+     ++ showList' proba
+     ++ ["", "Distribution:"]
+     ++ showList' (toList count)
 
 -- | Parse the input argument into a query.
 parse :: [String] -> Maybe Query

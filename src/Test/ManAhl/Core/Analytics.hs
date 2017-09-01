@@ -67,10 +67,14 @@ propCdfFromPdfComplete pdf = fst (last pillarsCdf) == 1
 -- | Ensure that the PDF and CDF have the correct number of pillars
 propCdfPdfPillars :: PDF -> Bool
 propCdfPdfPillars pdf =
-    nCdfPillars == nPdfPillars || nCdfPillars == nPdfPillars + 1
+    (length cdfPillars == length pdfPillars ||
+    length cdfPillars == length pdfPillars + 1)
+    &&
+      (all (`elem` cdfPillars) pdfPillars &&
+     all (`elem` pdfPillars) cdfPillars)
   where
-    nCdfPillars = Map.size $ unCDF $ mkCdf pdf
-    nPdfPillars = Map.size $ unPDF pdf
+    cdfPillars = catMaybes $ Map.elems $ unCDF $ mkCdf pdf
+    pdfPillars = Map.keys $ unPDF pdf
 
 -- | Ensure that the pdf construction is stable
 propPdfStable :: PdfPillars -> Bool

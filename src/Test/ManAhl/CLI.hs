@@ -11,7 +11,7 @@ import Control.Monad
 -- | Testsuite
 tests :: [(String, IO Bool)]
 tests = [
-    ("CLI Query creation", testQuery)
+    ("CLI Query", testQuery)
    ,("CLI Run",            testRun)
   ]
 
