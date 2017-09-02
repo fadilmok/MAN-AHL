@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Testsuite for the Uniform Random Engine
 module Test.ManAhl.Core.Random(
   tests
@@ -32,7 +33,7 @@ tests = [
 propMeanStd :: UniformRNGType -> Test
 propMeanStd rngT =
   TestQCRng rngT $ \ rng ->
-    Test.runWith 100 $
+    Test.runWith 10 $ \ (x :: Int) ->
       let vals = runProbaUni rng $ nextVals nRand
           m = mean vals
           std = stdDev vals
@@ -44,7 +45,7 @@ propMeanStd rngT =
 propBounds :: UniformRNGType -> Test
 propBounds rngT =
   TestQCRng rngT $ \ rng ->
-    Test.runWith 10 $
+    Test.runWith 10 $ \ (x :: Int) ->
       foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True $
         runProbaUni rng $ nextVals nRand
 
@@ -52,7 +53,7 @@ propBounds rngT =
 propUniform :: UniformRNGType -> Test
 propUniform rT =
   TestQCRng rT $ \ rng ->
-    Test.runWith 10 $
+    Test.runWith 10 $ \ (x :: Int) ->
       let stats = runStatUni rng $ allUStats nRand in
       Map.foldl (\ acc x ->
         if not acc then False

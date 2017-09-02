@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 -- | Module containing the Analytics unit tests
 module Test.ManAhl.Core.Analytics(
   tests
