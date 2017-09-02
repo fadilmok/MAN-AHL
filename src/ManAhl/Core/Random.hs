@@ -13,6 +13,8 @@ module ManAhl.Core.Random(
 ) where
 
 import ManAhl.Core.Types
+import ManAhl.Core.Analytics
+
 import Control.Monad
 import Control.Monad.State.Strict
 import Data.List (foldl')
@@ -44,7 +46,7 @@ runProbaUni r e = evalState e r
 runStatUni :: UniformRNG -> StatUniEngine -> Stats Double
 runStatUni r e =
   flip evalState r $
-    evalStateT e $ Stats statRange 0
+    evalStateT e $ Stats doubleDistEmpty 0
 
 -- | Engine to compute the next bounded uniform probability
 nextVal :: ProbaUniEngine Double
@@ -63,9 +65,7 @@ nextUStat = do
   lift $ put r
   Stats cs n <- get
   let !stats = Stats {
-          hsCount = Map.insertWith (+)
-            (case x `Map.lookupGE` statRange of
-               Just y -> fst y; Nothing -> error "Failure") 1 cs
+          hsDistri = add cs x
          ,hsTotalCount = n + 1
         }
   put stats
@@ -82,6 +82,3 @@ allUStats n = allStats' (n-1) nextUStat
     allStats' 0 acc = acc
     allStats' !n acc = allStats' (n - 1) $ acc >> nextUStat
 
--- | Range used to compute the statistics
-statRange :: Map Double Int
-statRange = Map.fromList $ zip (map (/100) [1, 2 .. 100]) [0..]

@@ -19,7 +19,7 @@ import Data.Map (toList)
 
 -- | Default pillars if not specified
 pillarsDefault :: PdfPillars
-pillarsDefault = [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
+pillarsDefault = PdfPillars [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
 
 -- | Query to Run from the parsed input,
 -- Computing the statistics for :
@@ -33,7 +33,7 @@ data Query =
     | RunUniformWith Int UniformRNGType
   deriving (Show, Eq)
 instance NFData Query where
-  rnf (RunWeightedWith p n u) = rnf p `seq` rnf n
+  rnf (RunWeightedWith (PdfPillars p) n u) = rnf p `seq` rnf n
   rnf (RunUniformWith n u) = rnf n
 
 -- | The run type using either the weighted probability or
@@ -54,7 +54,7 @@ showRes name (Stats count n) proba = unlines $ [
      ,"Probabilities:"
      ] ++ showList' proba
      ++ ["", "Distribution:"]
-     ++ showList' (toList count)
+     ++ showList' (toList $ unPWC $ unDist count)
   where
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
@@ -68,7 +68,8 @@ parse :: [String] -> Maybe Query
 parse xs = do
     args <- getArgs
     let run     = fromMaybe Weighted $ fmap read $ lookup "run" args
-        pillars = fromMaybe pillarsDefault $ fmap read $ lookup "pillars" args
+        pillars = fromMaybe pillarsDefault $ fmap (PdfPillars . read) $
+                    lookup "pillars" args
         nSims   = fromMaybe 1000000 $ fmap read $ lookup "nSims" args
         rng     = fromMaybe Mersenne $ fmap read $ lookup "rng" args
     return $ case run of
@@ -92,18 +93,18 @@ run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
   rng <- mkUniformRNG rngT
   let res = runStatUni rng $ allUStats nSims
-      stats = probaFromCount res
+      stats = probabilities res
   return $
-    Right $ ResultUniform res $ toList stats
+    Right $ ResultUniform res stats
 run (RunWeightedWith pdfPillars nSims rngT) = do
   rng <- mkUniformRNG rngT
   let p = mkEngineParams pdfPillars
   return $ case p of
     Left s -> Left s
     Right e -> let
-      res' = runStatEngine e rng $ allStats nSims
-      res = probaFromCount res'
-      in Right $ ResultWeighted res' $ toList res
+        res' = runStatEngine e rng $ allStats nSims
+        res = probabilities res'
+      in Right $ ResultWeighted res' res
 
 -- | Give the CLI help
 help :: [(String, String)]

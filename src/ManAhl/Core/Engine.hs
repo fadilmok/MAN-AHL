@@ -31,10 +31,12 @@ mkEngineParams :: PdfPillars -> Either String EngineParams
 mkEngineParams pdfP =
   either
       (\ msg -> Left msg)
-      (\ p -> Right EngineParams {
-        pdf = p
-       ,cdf = mkCdf p
-     }) $ mkPdf pdfP
+      (\ p -> let cdf' = mkCdf p in
+        Right EngineParams {
+            pdf = p
+           ,cdf = cdf'
+           ,iCdf = mkInvCdf cdf'
+         }) $ mkPdf pdfP
 
 -- | Compute the weighted probabilities
 runProbaEngine :: EngineParams -> UniformRNG -> ProbaWPEngine a -> a
@@ -46,17 +48,17 @@ runProbaEngine p uniRng e =
 runStatEngine :: EngineParams -> UniformRNG -> StatWPEngine -> Stats (Maybe Int)
 runStatEngine p uniRng e =
   flip evalState uniRng $
-    flip evalStateT (Stats Map.empty 0) $
+    flip evalStateT (Stats (Distribution $ PieceWiseCurve Map.empty) 0) $
       runReaderT e p
 
 -- | Engine to compute the next weighted probability
 nextNum :: ProbaWPEngine (Maybe Int)
 nextNum = do
-  EngineParams _ cdf <- ask
+  EngineParams _ _ iCdf <- ask
   uniRng <- get
   let (!x, !r) = runState nextVal uniRng
   put r
-  let !y = inverseCdf cdf x
+  let !y = invCdf iCdf x
   return y
 
 -- | Engine to compute n next weighted probabilties
@@ -66,15 +68,15 @@ nextNums n = replicateM n nextNum
 -- | Engine to compute the next cumulative statistics
 nextStat :: StatWPEngine
 nextStat = do
-  EngineParams _ cdf <- ask
+  EngineParams _ _ iCdf <- ask
   uniRng <- lift $ lift get
   let (!x, !r) = runState nextVal uniRng
   lift $ lift $ put r
-  let !y = inverseCdf cdf x
+  let !y = invCdf iCdf x
 
   Stats cs n <- get
   let !stats = Stats {
-          hsCount = Map.insertWith (+) y 1 cs
+          hsDistri = add cs y
          ,hsTotalCount = n + 1
         }
   put stats

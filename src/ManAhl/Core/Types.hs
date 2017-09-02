@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, FlexibleInstances #-}
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
   -- * Engines
@@ -7,9 +7,9 @@ module ManAhl.Core.Types(
   ProbaWPEngine,
   StatWPEngine,
   -- * Types
-  CDF(..), PDF(..),
-  PdfPillars,
-  CdfPillars,
+  PieceWiseCurve(..), PdfPillars(..),
+  CDF(..), PDF(..), InvCDF(..),
+  Distribution(..),
   UniformRNGType(..),
   UniformRNG(..),
   EngineParams(..),
@@ -18,7 +18,7 @@ module ManAhl.Core.Types(
 
 import Control.Monad.State.Strict
 import Control.Monad.Reader
-import Data.Map.Strict
+import Data.Map.Strict as Map
 import qualified System.Random as Ecuyer
 import qualified System.Random.Mersenne.Pure64 as Mersenne
 
@@ -33,33 +33,40 @@ data UniformRNG
 data UniformRNGType = Ecuyer | Mersenne
   deriving (Show, Read, Eq)
 
--- | Pillars points of the Probability Density Function
-type PdfPillars = [(Int, Double)]
--- | Pillars points of the Cumulative Distribution Function
-type CdfPillars = [(Double, Maybe Int)]
-
--- | Discrete Probabily Density Function,
+-- | PDF Pillars
+newtype PdfPillars = PdfPillars [(Int, Double)]
+  deriving (Show, Eq)
+-- | Discrete PieceWise Curve
 -- modelised using a TreeMap
-newtype PDF = PDF { unPDF :: Map Int Double }
+newtype PieceWiseCurve a b = PieceWiseCurve { unPWC :: Map a b }
+  deriving Show
+-- | Discrete Probabily Density Function,
+newtype PDF = PDF { unPDF :: PieceWiseCurve (Maybe Int) Double }
   deriving (Show, Eq)
 -- | Discrete Cumulative Distribution Function
--- modelised using a TreeMap
-newtype CDF = CDF { unCDF :: Map Double (Maybe Int) }
+newtype CDF = CDF { unCDF :: PieceWiseCurve (Maybe Int) Double}
+  deriving (Show, Eq)
+-- | Discrete Inverse Cumulative Distribution Function
+newtype InvCDF = InvCDF { unICDF :: PieceWiseCurve Double (Maybe Int) }
+  deriving (Show, Eq)
+-- | Distribution
+newtype Distribution a = Distribution { unDist :: PieceWiseCurve a Int }
   deriving (Show, Eq)
 
--- | Weighted Probability Engine
--- contains the PDF, CDF
+-- | Weighted Probability Engine Params
+-- contains the PDF, CDF, inverseCDF
 -- needed to compute the weighted probabilities
 data EngineParams = EngineParams {
     pdf     :: PDF
-   ,cdf     :: !CDF
+   ,cdf     :: CDF
+   ,iCdf    :: !InvCDF
   }
 
 -- | Statistic of a given Run [a]
---  hsCount : represent the frequency of each unique element
+--  hsCount : represent the distribution of the  elements
 --  hsTotalCount : the total nb of element
 data Stats a = Stats {
-    hsCount       :: !(Map a Int)
+    hsDistri      :: !(Distribution a)
    ,hsTotalCount  :: !Int
   } deriving Show
 
@@ -71,5 +78,23 @@ type StatUniEngine = StateT (Stats Double) (State UniformRNG) (Stats Double)
 -- | Weighted Probility Engine
 type ProbaWPEngine a = ReaderT EngineParams (State UniformRNG) a
 -- | Cumulative Statistic Engine for a Weighted distribution
-type StatWPEngine = ReaderT EngineParams (StateT (Stats (Maybe Int)) (State UniformRNG)) (Stats (Maybe Int))
+type StatWPEngine = ReaderT EngineParams (StateT (Stats (Maybe Int))
+                      (State UniformRNG)) (Stats (Maybe Int))
 
+
+instance Functor (PieceWiseCurve a) where
+  fmap f (PieceWiseCurve m) = PieceWiseCurve $ Map.map f m
+
+instance {-# OVERLAPS #-} Eq (PieceWiseCurve (Maybe Int) Double) where
+  PieceWiseCurve lhs == PieceWiseCurve rhs =
+    Map.foldl (\acc x -> if not acc then False else x < 0.0001) True $
+      Map.unionWith (-) lhs rhs
+
+instance {-# OVERLAPS #-} Eq (PieceWiseCurve Double (Maybe Int)) where
+  PieceWiseCurve lhs == PieceWiseCurve rhs =
+    PieceWiseCurve (transpose lhs) == PieceWiseCurve (transpose rhs)
+      where
+        transpose = Map.fromList . Prelude.map (\(x, y) -> (y, x)) . Map.toList
+
+instance {-# OVERLAPPABLE #-} (Eq a, Eq b) => Eq (PieceWiseCurve a b) where
+  PieceWiseCurve lhs == PieceWiseCurve rhs = lhs == rhs
