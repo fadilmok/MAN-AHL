@@ -3,7 +3,7 @@ module ManAhl.CLI(
   parse,
   run,
   help,
-  Query(..),
+  Query(..), Result(..),
   pillarsDefault
 ) where
 

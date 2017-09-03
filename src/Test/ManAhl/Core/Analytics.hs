@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Module containing the Analytics unit tests
 module Test.ManAhl.Core.Analytics(
   tests
@@ -40,60 +41,63 @@ genInvCdfQuery = do
 -- Testsuite
 tests :: TestSuite
 tests = [
-    ("CDF Creation",                    propCdfFromPdfComplete)
+    ("InvCDF Creation",                 propInvCdfFromPdfComplete)
    ,("CDF and PDF pillars check",       propCdfPdfPillars)
    ,("PDF stable with reverse Pillars", propPdfStable)
    ,("PDF consistency",                 propPdfConsistency)
    ,("InvCDF valid",                    propInvCdfValid)
    ,("PDF Failure",                     testPdfFail)
-   ,("CDF Failure",                     testCdfFail)
    ,("Inverse CDF Failure",             testInvCdfFail)
    ,("Mean Failure",                    testMeanFail)
    ,("Std Failure",                     testStdFail)
    ,("PDF No regression",               testPDFNoRegression)
-   ,("CDF No regression",               testCDFNoRegression)
+   ,("InvCDF No regression",            testInvCDFNoRegression)
   ]
 
 -- | Ensure that the last pillars of the CDF is 100%
-propCdfFromPdfComplete :: Test
-propCdfFromPdfComplete =
+propInvCdfFromPdfComplete :: Test
+propInvCdfFromPdfComplete =
   TestQC $ run $ \pdf ->
-    let cdf = mkCdf pdf
-        pillarsCdf = Map.toList $ unCDF cdf
+    let iCdf = mkInvCdf $ mkCdf pdf
+        pillarsCdf = toPillars iCdf
      in fst (last pillarsCdf) == 1
 
 -- | Ensure that the PDF and CDF have the correct number of pillars
 propCdfPdfPillars :: Test
 propCdfPdfPillars =
   TestQC $ run $ \pdf ->
-    let cdfPillars = catMaybes $ Map.elems $ unCDF $ mkCdf pdf
-        pdfPillars = Map.keys $ unPDF pdf
-     in (length cdfPillars == length pdfPillars ||
-        length cdfPillars == length pdfPillars + 1)
+    let cdfPillars = fst $ unzip $ toPillars $ mkCdf pdf
+        pdfPillars = fst $ unzip $ toPillars pdf
+        invCdfPillars = snd $ unzip $ toPillars $ mkInvCdf $ mkCdf pdf
+     in (length cdfPillars == length pdfPillars &&
+            length pdfPillars == length invCdfPillars)
         &&
         (all (`elem` cdfPillars) pdfPillars &&
-        all (`elem` pdfPillars) cdfPillars)
+          all (`elem` pdfPillars) cdfPillars &&
+            all (`elem` pdfPillars) invCdfPillars &&
+              all (`elem` invCdfPillars) pdfPillars)
 
 -- | Ensure that the pdf construction is stable
 propPdfStable :: Test
 propPdfStable =
-  TestQC $ run $ forAll genPdfPillars $ \ pdfP ->
-    mkPdf pdfP == mkPdf ( reverse pdfP )
+  TestQC $ run $ forAll genPdfPillars $ \ (PdfPillars pdfP) ->
+    mkPdf (PdfPillars pdfP) == mkPdf ( PdfPillars $ reverse $ pdfP )
 
 -- | Ensure that the pdf probabilities are correct.
 propPdfConsistency :: Test
 propPdfConsistency =
-  TestQC $ run $ \(PDF pdfP) ->
-    Map.foldl (\acc x -> x + acc) 0 pdfP <= 1
+  TestQC $ run $ \ (pdf :: PDF) ->
+    cFoldl (\acc x -> x + acc) 0 pdf <= 1
 
 -- | Ensure that the inverseCdf recovers the correct pdf pillars
 propInvCdfValid :: Test
 propInvCdfValid =
   TestQC $ run $ forAll genInvCdfQuery $ \(pdf, xs) ->
     let cdf = mkCdf pdf
-        set = Set.fromList $ Nothing : map Just (fst $ unzip $ Map.toList $ unPDF pdf)
+        iCdf = mkInvCdf cdf
+        set = Set.fromList $ fst $ unzip $ toPillars pdf
      in all (==True) $
-           map (\ x -> inverseCdf cdf x `Set.member` set) xs
+           map (\ x -> invCdf iCdf x `Set.member` set) xs
 
 -- | Ensure that the PDF construction fails when expected
 testPdfFail :: Test
@@ -101,23 +105,17 @@ testPdfFail =
   TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
-      negativePro = isLeft $ mkPdf [(1, -1)]
-      nullPro = isLeft $ mkPdf []
-      nullPro2 = isLeft $ mkPdf [(1,0)]
-      greaterPro = isLeft $ mkPdf [(1, 0.4), (2, 0.5), (3, 0.4)]
-
--- | Ensure that the CDF fails with incorrect PDF
-testCdfFail :: Test
-testCdfFail =
-  TestIO $ failTest $
-    mkCdf $ PDF $ Map.fromList [(1, 0.5), (2, 0.3), (3, 0.3)]
+      negativePro = isLeft $ mkPdf $ PdfPillars [(1, -1)]
+      nullPro = isLeft $ mkPdf $ PdfPillars []
+      nullPro2 = isLeft $ mkPdf $ PdfPillars [(1,0)]
+      greaterPro = isLeft $ mkPdf $ PdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
 
 -- | Ensure that inverse CDF fails when expected
 testInvCdfFail :: Test
 testInvCdfFail =
   TestIO $ failTest $
-    let cdf = CDF $ Map.fromList [(0.5, Just 1), (0.8, Just 2), (1, Just 3)]
-    in inverseCdf cdf 1.1
+    let iCdf = fromPillars [(0.5, Just 1), (0.8, Just 2), (1, Just 3)]
+    in invCdf iCdf 1.1
 
 -- | Ensure that the mean fails when expected
 testMeanFail :: Test
@@ -134,33 +132,23 @@ testPDFNoRegression :: Test
 testPDFNoRegression =
   TestPure $ const $ test
     where
-      equal :: Ord a => Map.Map a Double -> Map.Map a Double -> Bool
-      equal lhs rhs =
-          Map.foldl (\ acc x -> if not acc then False else x < 0.0001) True $
-              Map.unionWith (\ x y -> abs (x - y)) lhs rhs
-
-      pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      pdfP = PdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
       res  = mkPdf pdfP
       test = case res of
               Left _ -> False
-              Right pdf ->
-                unPDF pdf `equal` (Map.fromList [(1, 0.3), (2, 0.4), (3, 0.3)])
+              Right p ->
+                p == (fromPillars [(Just 1, 0.3), (Just 2, 0.4), (Just 3, 0.3)])
 
 -- | Non regression test for the cdf
-testCDFNoRegression :: Test
-testCDFNoRegression =
+testInvCDFNoRegression :: Test
+testInvCDFNoRegression =
   TestPure $ const test
     where
-      equal :: CdfPillars -> CdfPillars -> Bool
-      equal lhs rhs
-        | length lhs /= length rhs = False
-        | otherwise = all (==True) $
-              zipWith (\ (p1, v1) (p2, v2) -> abs (p1 - p2) < 0.0001 && v1 == v2) lhs rhs
-      pdfP = [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      pdfP = PdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
       res  = mkPdf pdfP
       test = case res of
               Left _ -> False
               Right pdf ->
-                Map.toList (unCDF $ mkCdf pdf)
-                    `equal` [(0.3, Just 1), (0.7, Just 2), (1, Just 3)]
+                mkInvCdf (mkCdf pdf) ==
+                  fromPillars [(0.3, Just 1), (0.7, Just 2), (1, Just 3)]
 

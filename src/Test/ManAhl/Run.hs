@@ -9,10 +9,9 @@ import System.Exit (exitFailure)
 import Text.Printf
 import Test.QuickCheck
 
-import ManAhl.Core.Random
 import Test.ManAhl.QuickCheck (runTest)
 import qualified Test.ManAhl.Core.Analytics as Analytics
-import qualified Test.ManAhl.Core.UniformEngine as Uniform
+import qualified Test.ManAhl.Core.UniformEngine as UniformEngine
 import qualified Test.ManAhl.Core.WeightedEngine as WeightedEngine
 import qualified Test.ManAhl.CLI as CLI
 

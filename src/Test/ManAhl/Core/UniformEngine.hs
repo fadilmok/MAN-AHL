@@ -49,7 +49,6 @@ propBounds rngT =
   TestQCRng rngT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
       foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True $
-        hsDistriUni $
           computeProba Nothing rng (nextNums nRand :: ProbaUniEngine [Double])
 
 -- | Test the distribution of the uniform engine is uniform
@@ -57,12 +56,13 @@ propUniform :: UniformRNGType -> Test
 propUniform rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
-      let stats = computeStats Nothing rng (allStats nRand :: StatUniEngine Stats)
-       in Map.foldl (\ acc x ->
+      let stats = computeStats Nothing rng (allStats nRand :: StatUniEngine UniStats)
+          (Just proba) = hsProba stats
+       in foldl (\ acc (_, x) ->
           if not acc then False
               else round (x * 100) ==
-                round (100 / fromIntegral (Map.size $ hsDistri stats))) True $
-                  fromJust $ hsProbaUni stats
+                round (100 / fromIntegral (nPillars $ hsDistri stats))) True proba
+
 
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable
@@ -72,7 +72,7 @@ propPerf rT =
     Test.runWith 10 $ monadicIO $
   do
     t <- QC.run $ time $
-            computeStats Nothing rng (allStats 1000000 :: StatUniEngine Stats)
+            computeStats Nothing rng (allStats 1000000 :: StatUniEngine UniStats)
 
     let res = t < 0.4
     unless res $ do

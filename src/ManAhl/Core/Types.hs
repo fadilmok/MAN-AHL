@@ -21,6 +21,7 @@ module ManAhl.Core.Types(
   Curve(..)
 ) where
 
+import Control.DeepSeq
 import Control.Monad
 import Control.Monad.State.Strict
 import Control.Monad.Reader
@@ -57,7 +58,7 @@ newtype InvCDF = InvCDF { unICDF :: PieceWiseCurve Double (Maybe Int) }
   deriving (Show, Eq, Curve Double (Maybe Int))
 -- | Distribution
 newtype Distribution a = Distribution { unDist :: PieceWiseCurve a Int }
-  deriving (Show, Eq, Curve a Int)
+  deriving (Show, Eq, Curve a Int, NFData)
 
 class Curve b c a | a -> b, a -> c where
   emptyCurve :: a
@@ -83,35 +84,12 @@ class Curve b c a | a -> b, a -> c where
   -- | O(n) appy a function to each pillar
   cMap :: (c -> c) -> a -> a
 
-instance Curve a b (PieceWiseCurve a b) where
-  emptyCurve = PieceWiseCurve Map.empty
-  nPillars = Map.size . toRaw
-  fromPillars = fromRaw . Map.fromList
-  toPillars = Map.toList . toRaw
-  fromRaw = PieceWiseCurve
-  toRaw = unPWC
-  PieceWiseCurve m !!! x =
-    case x `Map.lookupGE` m of
-      Just r -> r
-      Nothing -> error $ "Fails: " ++ show x
-  addWith f x y c = PieceWiseCurve $ Map.insertWith f x y $ toRaw c
-  add x y c = PieceWiseCurve $ Map.insert x y $ toRaw c
-  cFoldl f x m = Map.foldl f x $ toRaw m
-  cMap = fmap
-
 -- | Class to operate a Distribution
 class Distri a where
   -- | O(log n) add an element
   increaseCount :: a -> Distribution a -> Distribution a
   -- | Range used to compute the statistics
   defaultDist :: Distribution a
-
-instance Distri (Maybe Int) where
-  increaseCount x = addWith (+) x 1
-  defaultDist = emptyCurve
-instance Distri Double where
-  increaseCount x = addWith (+) (fst $ defaultDist !!! x) 1
-  defaultDist = fromPillars $ zip (Prelude.map (/100) [1, 2 .. 100]) [0..]
 
 -- | Weighted Probability Engine Params
 -- contains the PDF, CDF, inverseCDF
@@ -137,7 +115,7 @@ type WeightedStats = Stats (Maybe Int)
 -- | Class to compute probabilities given an engine.
 class Monad a => ProbaEngine a b | a -> b where
   -- | Compute the probabilities
-  computeProba :: Maybe EngineParams -> UniformRNG -> a b -> b
+  computeProba :: Maybe EngineParams -> UniformRNG -> a c -> c
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
@@ -196,3 +174,30 @@ instance {-# OVERLAPS #-} Eq (PieceWiseCurve Double (Maybe Int)) where
 instance {-# OVERLAPPABLE #-} (Eq a, Eq b) => Eq (PieceWiseCurve a b) where
   PieceWiseCurve lhs == PieceWiseCurve rhs = lhs == rhs
 
+instance Curve a b (PieceWiseCurve a b) where
+  emptyCurve = PieceWiseCurve Map.empty
+  nPillars = Map.size . toRaw
+  fromPillars = fromRaw . Map.fromList
+  toPillars = Map.toList . toRaw
+  fromRaw = PieceWiseCurve
+  toRaw = unPWC
+  PieceWiseCurve m !!! x =
+    case x `Map.lookupGE` m of
+      Just r -> r
+      Nothing -> error $ "Fails: " ++ show x
+  addWith f x y c = PieceWiseCurve $ Map.insertWith f x y $ toRaw c
+  add x y c = PieceWiseCurve $ Map.insert x y $ toRaw c
+  cFoldl f x m = Map.foldl f x $ toRaw m
+  cMap = fmap
+
+instance Distri (Maybe Int) where
+  increaseCount x = addWith (+) x 1
+  defaultDist = emptyCurve
+instance Distri Double where
+  increaseCount x = addWith (+) (fst $ defaultDist !!! x) 1
+  defaultDist = fromPillars $ zip (Prelude.map (/100) [1, 2 .. 100]) [0..]
+
+instance NFData a => NFData (Stats a) where
+  rnf (Stats d t p) = rnf d `seq` rnf t `seq` rnf p
+instance (NFData a, NFData b) => NFData (PieceWiseCurve a b) where
+  rnf (PieceWiseCurve c) = rnf c
