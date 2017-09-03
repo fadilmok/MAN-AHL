@@ -109,7 +109,7 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
 help :: [(String, String)]
 help = [
     ("-help","Produce this help.")
-   ,("-pillars=[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]", "PDF Pillars")
+   ,("-pillars='[(1,0.2),(2, 0.3),(3, 0.1),(4, 0.15)]'", "Input the PDF Pillars")
    ,("-nSims=1000000", "Number of random number generated")
    ,("-rng=Mersenne", "RNG type: Mersenne or Ecuyer")
    ,("-run=Weighted", "Run type: Weighted or Uniform")

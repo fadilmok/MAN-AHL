@@ -26,8 +26,8 @@ mkPdf (PdfPillars xs)
   | null xs = Left "The pdf pillars are empty."
   | null $ filter (\(_, x) -> x /= 0) xs =
       Left "The pdf pillars contain only zero."
-  | foldl (\ acc (_, x) -> if acc then acc else x < 0) False xs =
-      Left "PDF Pillars contain negative values."
+  | foldl (\ acc (_, x) -> if acc then acc else x < 0 || x > 1) False xs =
+      Left "PDF Pillars contain negative values or greater than 1."
   | foldl (\ acc (_, x) -> acc + x) 0 xs > 1 =
       Left "The sum of PDF probabilities are greater than 1."
   | otherwise = Right $

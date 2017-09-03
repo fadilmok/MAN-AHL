@@ -15,7 +15,7 @@ main :: IO()
 main = do
   args <- getArgs
   let printHelp =
-        mapM_ (\ (x, y) -> printf "%-45s: %s \n" x y) help
+        mapM_ (\ (x, y) -> printf "%-55s: %s \n" x y) help
 
   if "-help" `elem` args
      then printHelp
