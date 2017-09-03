@@ -99,7 +99,7 @@
 \newpage
 
 %-------------------------------------------------------------------------------
-\chapter{Algorithm}
+\chapter{Algorithm Exercise}
 \section{Question}
 Implement the method nextNum() and a minimal but effective set of unit tests. 
 Implement in the language of your choice, Python is preferred, but Java and 
@@ -118,6 +118,7 @@ we may get the following results. As the results are random, these particular re
 \end{itemize}
 
 \section{The Problem}
+\label{sec:problem}
 We interpret the question as the following the mathematical problem. 
 We define a $X$ as a discrete random variable. 
 As input, we have a $k$ values, $x_i$, with their associated probabilities, $p_i$.
@@ -167,17 +168,15 @@ to generate random numbers between $0$ and $1$.
 We picked two pseudo random numbers generator : Mersenne Twister\footnote{
 The Mersenne twister is a pseudorandom number generator developed by 
 Makoto Matsumoto and Takuji Nishimura that is based on a matrix linear 
-recurrence over a finite binary field. It provides for fast generation of 
-very high quality pseudorandom numbers. 
-It has a period of $2^63-1$.
+recurrence over a finite binary field. 
+It has a period of $2^{63}-1$.
 The source for the C code can be found 
 \href{http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt64.html}{here}.
-} and Ecuyer\footnote{
+} (This implementation claims to be faster than Ecuyer's one.) and Ecuyer\footnote{
 This is the default random number generator in haskell one in haskell.
  This implementation uses the Portable Combined Generator of L'Ecuyer
- for 32-bit computers, transliterated by Lennart Augustsson. 
+ for 32-bit computers, transliterated in Haskell by Lennart Augustsson. 
  It has a period of roughly $2.30584e18$.
- This implementation claims to be faster than Ecuyer's one.
  } in order to compare and pick the best one.
 
 Finally using the inverse of the discrete cumulative function, reference as Inverse CDF, 
@@ -186,7 +185,7 @@ we can pick an $x_i$, described in \autoref{eq:invcdf}.
 	\forall y \in \left[0...1 \right], F^{-1}_y = x_i
 	\label{eq:invcdf}
 \end{equation}
-This process gives us a weighted probability pseudo random number generator.
+This process gives us a weighted probability pseudo random number engine.
 
 \section{Solution Proposed}
 \subsection{Overview}
@@ -197,12 +196,14 @@ efficient, portable and well tested.
 
 The key features we would like to achieve :
 \begin{itemize}
-	\item Implement the weighted probability engine based
-	on a uniform random probability generator,
+	\item Implement the weighted probability engine\footnote{
+		The task of an engine is to manage the creation of a serie of
+		pseudo random numbers.} based
+		on a bounded uniform random probability engine,
+	\item Target a $100\%$ testing coverage.
+	\item Assess the quality of our probability engines,
+	\item Assess the performances of our probability engines,
 	\item Create an User Interface, via Command Line Input,
-	\item Assess the quality of our weighted probability engine,
-	\item Compare various pseudo random number generator,
-	\item Target $100\%$ testing coverage.
 	\item Document the work.
 \end{itemize}
 
@@ -229,24 +230,28 @@ The various modules implement all the functionalities we need.
 	the inverse discrete cumulative function and the mean and
 	standard deviation functions.
 	
-	\item[Random]	The uniform pseudo random numbers generator,
+	\item[Uniform Engine] The bounded uniform 
+	pseudo random numbers engine,
 	
 	This module contains an abstraction to a uniform pseudo
-	random number generator with values within $ \left[ 0, 1 \right]$.
+	random number generator with values bounded 
+	within $ \left[ 0, 1 \right]$.
 	It can compute a random number or a series of random 
 	number and the statistics related to the distribution of 
 	the random number generated.
-	\item[Engine] 	The weighted probability engine,
+	\item[Weighted Engine] 	The weighted pseudo random 
+	numbers probability engine,
 	
 	This module includes an abstraction to the weighted 
 	pseudo random numbers generators.
 	It allows computation and statistics on these numbers.
-	It inluce the requested nextNum function.
+	It includes the requested nextNum function.
 	\item[CLI] 		The command line input layer,
 	
 	As it is meaningless to look only at one random number at the time.
-	The CLI provides a flexible API to compute $n$ random numbers.
-	We can select any random number we have implemented.
+	The CLI provides a flexible API to compute
+	statistics on $n$ random numbers.
+	We can select any random number engine we have implemented.
 	We display only the distribution of these random numbers.
 	\item[Testing] 	The testing module,
 	
@@ -256,17 +261,18 @@ The various modules implement all the functionalities we need.
 \end{description}
 
 
-\subsection{UI}
+\subsection{User Interface}
 The UI is a command line input allowing the user to run each feature.
 After building the project, with the following command:
 \begin{verbatim}
 cabal build
 \end{verbatim}
-The binary is located in \emph{./dist/build/MAN-AHL/MAN-AHL}.
-We can run weighted engine or the unform generator
+The binary is then located in \emph{./dist/build/MAN-AHL/MAN-AHL}.
+We can run the weighted or the uniform engine
  as described in \autoref{fig:cli}, with the following command:
 \begin{verbatim}
 time ./dist/build/MAN-AHL/MAN-AHL -run=Weighted -nSims=1000000
+        -pillars=''
 \end{verbatim}
  The binary has the option \emph{-help}, stating all the default values.
 \begin{figure}[h!]
@@ -280,10 +286,104 @@ time ./dist/build/MAN-AHL/MAN-AHL -run=Weighted -nSims=1000000
 
 \section{Implementation}
 
+We use Haskell as implementation language. It is a purely functional language.
+It has a strong type system. It is all about types, they tell the story.
+In this section, we inztroduce the key types used thoughout the application.
+
+\subsection{Analytics Module}
+
+The analytics are mainly destined to weighted probability engine.
+
+We define the \emph{PieceWiseCurve x y} algebraic data type(ADT) to provide an
+abstraction to piecewise curve, as we are working with discrete
+random variable, it is the closest to reality. We picked the tree map data
+structure, \emph{Data.Map} in Haskell, to get efficient lookup ( O(log n) ).
+The \emph{Curve x y a} class\footnote{ad hoc polymorphism} 
+provides the key operations on a 
+\emph{PieceWiseCurve}.  
+
+We subsequently define the ADTs to represent all the curves we need
+for our weighted probability engine :
+\begin{itemize}
+	\item The \emph{PDF} ADT modelising the probability mass function,
+	The key are the $x_i$ and the values the $p_i$, we presented in
+	\autoref{sec:problem}.
+	We merge the pillars with similar $x_i$, discard the pillars with zero
+	$p_i$ and ensure that $\sum_i p_i \leq 1$.
+	If needed we a a pillar representing non selected element 
+	as \emph{Nothing}. This way we ensure that the probabilities
+	adds up to 1.
+	\item The \emph{CDF} ADT represents the discrete cumulative
+	curve, presented in \autoref{fig:cdf2}.
+	\item The \emph{InvCDF} ADT represents the inverse CDF curve,
+	as explained in \autoref{eq:invcdf}
+	\item The \emph{Distribution a} ADT models a distribution curve
+	of the random number generated.
+\end{itemize}
+Again, we refer to curve as to piecewise curves or histograms.
+
+This module contains also the basic statistics we are using to 
+analyse the results.
+
+\subsection{Uniform Engine Module}
+
+The \emph{UniformRNG} ADT abstracts a choice of uniform pseudo random 
+number generator, Mersenne Twister and Ecuyer. We could seemlessly
+add new generator, if needs be. We would need to extend the standard
+Haskell \emph{RandomGen} class. 
+They can generate un-bounded pseudo random numbers.
+
+The \emph{ProbaUniEngine} ADT abstracts the computation of a uniform pseudo
+random number generation bounded between 0 and 1.
+It uses the \emph{State} monad to pass on the state of \emph{UniformRNG}
+when we combine multiple computations.
+This engine instanciates the \emph{ProbaEngine} class, which define
+and abstract the role of a probability engine. The latter is to 
+create one or a series of pseudo random numbers.
+
+The \emph{StatUniEngine} ADT abstracts the computation of the statistics
+related to the bounded uniform random numbers generated. 
+In order to be efficient, we compute only the distribution while we 
+are creating pseudo random numbers. 
+There is a post-processing step at the end of the simulation, which 
+computes the remaining relevant statistics.
+It uses the \emph{State} monad to pass on the state of the 
+uniform random number generator and the cumulative statistics.
+This engine instanciates the \emph{StatEngine} class, which role is
+to compute the statistics of a series of random numbers.
+
+\subsection{Weighted Engine Module}
+
+The \emph{ProbaWPEngine} ADT allows to computed weighted pseudo
+random numbers. It order to achieve this, it need to build and keep
+thoughout the computations the \emph{EngineParams} ADT. 
+This latter encapsulates the \emph{PDF}, \emph{CDF} and \emph{InvCDF}
+ADTs. They do not change thoughout the computations and they are kept 
+in memory for efficiency. We pass them thought the computations
+using the \emph{Reader} monad. We also use the \emph{State} monad
+to pass on the state of the bounded uniform engine.
+It also instanciates the \emph{ProbaEngine} class.
+
+The \emph{StatWPEngine} ADT compute the statistic for a weighted
+probabilities run. It also use a monad composed of a \emph{Reader}
+and \emph{State} monads. A post processing step computes
+the remaining metrics. It also instanciates the \emph{StatEngine} class.
+
+\subsection{CLI Module}
+Using the \emph{Query} ADT we modelise a query from the command line
+dynamically. This latter is processed by the \emph{run} function to 
+produce a  \emph{Result} ADT.
+
+In a way, we lose static typing here in order to merge all the types of 
+request and to dispatch the query to the appropriate engine. And we merge
+back the result into the \emph{Result} to provide a single function achieving
+everything we need.
+
+\subsection{Testing Module}
 
 \section{Automated Unit and Integration Testing}
-We need to test each module independtly, i.e. unit testing, and when they 
-are all used together, i.e. integration testing.
+We need to test each module independtly, i.e. unit testing, and all used 
+together, i.e. integration testing.
 
 The testing environment used is described in below\footnote{
 Given that I don't have access to my server, 
@@ -317,13 +417,13 @@ time cabal test --show-details=streaming
 
 The following Test Suites, i.e. lists of tests, compose our test plan split by modules.
 
-\subsection{Test Data}
+\subsection{Test Data Sample}
 
-The key sample used throughout the testing is the generation of PDF pillars.
-We tried to pick a realistic sample.
-
+The key test data sample used throughout the testing 
+is the generation of PDF pillars.
+We tried to pick a realistic sample :
 The pillars can have 1 to 10 pillars. Their summed probability are always less 
-than or equal to 1.  Each probability is within the $[0.01, 1]$ bound.
+than or equal to 1.  Each probability is within the $]0, 1]$ bound.
 
 \subsection{Analytics Testing} 
 These are the unit tests for the Analytics only.
@@ -333,33 +433,28 @@ These are the unit tests for the Analytics only.
 		that the last pillar of the CDF is 1.
 		As the CDF is build incrementally, this gives a good sense that
 		the CDF construction has been correct.
-	\item [CDF and PDF pillars check]
+	\item [InverseCDF, CDF and PDF pillars check]
 		Given a 1000 pseudo random PDF, we ensure that
-		the pillars on the x axis of the PDF are the pillars on the y
-		axis of the CDF.
+		the pillars on the x axis of the PDF and CDF are the pillars on the y
+		axis of the Inverse CDF.
 	\item [PDF Stable]
 		Given a 1000 pseudo random PDF pillars, 
 		we ensure that we get the same PDF given the reverse input.
 	\item [PDF consistency]
 		Given a 1000 pseudo random PDF, 
 		we ensure that the sum of the PDF pillars probabilities are 
-		less than 1. We indeed modelise the non selected element
+		equal to 1. We indeed modelise the non selected element
 		only in the CDF.
 	\item [Inverse CDF valid]
 		Given a 1000 pseudo random PDF,
 		we build the CDF and we ensure that for a random number of
 		x values within 0 and 1 we always recover a x pillars of the PDF.
-	\item [PDF Failure]
+	\item [PDF failure]
 		We test the expecture failure of the PDF construction. 
 		We can't have negative values. We need at least one valid pillar.
 		The pillars with 0 probabilities are discarded.
-		And the sum of the PDF pillars probabilities must be less or
+		And the sum of the PDF pillars probabilities must be 
 		equal to one.
-	\item [CDF Failure]
-		 The CDF construction always assume a correct PDF as
-		 input. If it is not the case, it fails if the aggregated 
-		 probabilities are greater than 1.
-		 The test ensure an exception is raised.
 	\item [Inverse CDF Failure]
 		We check that the inverse CDF function raise an
 		exception if the x input is outside the correct bounds, 
@@ -367,26 +462,30 @@ These are the unit tests for the Analytics only.
 	\item [Mean and Standard Deviation Failure]
 		These functions raise an exception for empty lists.
 		We test it automatically.
-	\item [PDF and CDF Non Regression]
+	\item [PDF and Inverse CDF Non Regression]
 		We ensure without randomness that given a set of pillars,
-		we recover the expected CDF and PDF.
+		we recover the expected Inverse CDF and PDF.
 \end{description}
-\subsection{Random Testing} 
+\subsection{Uniform Engine Testing} 
 
-These are the unit tests for the uniform pseudo random generator.
+These are the unit tests for the bounded uniform pseudo random engine.
 	
 \begin{description}
 	\item [Mean and Standard Deviation]
 		Given a large number of random number generated for
 		both Ecuyer and Mersenne, i.e. $100000$.
 		We ensure that the mean and the standard deviation 
-		of the distributions are still the same. Run 100 times.
+		of the distributions are still the same. Run 10 times.
+		We ensure that the uniform random number engines keep
+		the same properties.
 	\item [Bounds]
 		Test ensuring that the uniform pseudo random generators
 		generate probabilities with the $[0, 1]$ bound.
-		Run $100$ times for $100000$ random numbers.
+		Run $10$ times for $100000$ random numbers.
 	\item [Uniform]
-		Ensure that the ditributions generated are uniform.
+		Ensure that the ditributions generated are uniform,
+		by making sure that we match a flat distribution at 0.001
+		precision.
 		Run 10 times for $100000$ random numbers.
 	\item [Performance]
 		Ensure that the pseudo random numbers keep at
@@ -394,7 +493,7 @@ These are the unit tests for the uniform pseudo random generator.
 		Run 10 times for $100000$ random numbers.
 \end{description}
 
-\subsection{Engine Testing} 
+\subsection{Weighted Engine Testing} 
 These are the unit tests for the weighted pseudo random engine.
 All tests are run using the two available uniform pseudo random
 generators. 
@@ -402,7 +501,7 @@ These are like the integration tests as they use most of the library.
 \begin{description}
 	\item [Distribution check]
 		We check that we recover the PDF distribution from
-		a sample of 1000000 at $0.5\%$ precision.
+		a sample of 1000000 random numbers at $0.1\%$ precision.
 		We run this for 10 pseudo random PDF.
 	\item [Engine Fail]
 		Ensure that the construction of the engine 
@@ -426,35 +525,27 @@ We test that the API produce what is expected.
 
 \section{Performance Testing}
 
-\section{Extension}
+\section{Possible Extension}
 Here is a list of possible extension we could add.
 \begin{description}
+	\item [Analytics]
+	Further abstract the PDF, CDF, InvCDF to handle all kind of keys.
 	\item [Testing]
-	Add some qualitative testing, by displaying the distribution generated 
-	by the random number generators.
-	
-	Run the tests on different environments to ensure the portability of 
+	We could run the tests on different environments to ensure the portability of 
 	the code.
 	\item [UI] 
 	A nice extension would be to add a Graphic User Interface,
 	using the library 
 	\href{https://hackage.haskell.org/package/threepenny-gui}{threepenny-gui}
-	to create a portable Web application.
-	
+	to create a portable Web application. 
+
 	Also we could integrate a plot library to display the distribution of 
 	random numbers.
-	\item[Database]
-	We could add features to store and retrieve the results.
-	\item[Continuous Integration]
-	The fact that we tested only Mac OS, c.f. \autoref{apx:testing.env} is 
-	not production like.
-	We would like to run on various environment, a simple extension would 
-	be to run on Travis and AppVeyor website accessible via GitHub.
 \end{description}
 
 %-------------------------------------------------------------------------------
 \newpage
-\chapter{SQL}
+\chapter{SQL Exercise}
 \section{Question}
 Given the following tables
 \begin{lstlisting}[
