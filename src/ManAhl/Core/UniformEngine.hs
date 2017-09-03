@@ -21,13 +21,13 @@ import System.Random.Mersenne.Pure64
 -- | Make UniformRNG instance of RandGen by delegating the
 -- work to the inner RNG
 instance RandomGen UniformRNG where
-  next (RandomEcuyer rng)   = let (x, r) = next rng in (x, RandomEcuyer r)
-  next (RandomMersenne rng) = let (x, r) = next rng in (x, RandomMersenne r)
+  next (RandomEcuyer rng)       = let (x, r) = next rng in (x, RandomEcuyer r)
+  next (RandomMersenne rng)     = let (x, r) = next rng in (x, RandomMersenne r)
   genRange (RandomEcuyer rng)   = genRange rng
   genRange (RandomMersenne rng) = genRange rng
-  split (RandomEcuyer rng)   = let (g1, g2) = split rng in
+  split (RandomEcuyer rng)      = let (g1, g2) = split rng in
                                    (RandomEcuyer g1, RandomEcuyer g1)
-  split (RandomMersenne rng) = let (g1, g2) = split rng in
+  split (RandomMersenne rng)    = let (g1, g2) = split rng in
                                    (RandomMersenne g1, RandomMersenne g2)
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
