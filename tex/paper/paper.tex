@@ -23,6 +23,7 @@
 \usepackage{textcomp}
 \lstset{upquote=true}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -68,12 +69,12 @@
 \includegraphics[width=0.6\textwidth]{img/logo.png}\par\vspace{1cm}
 \vfill
 {\Huge\scshape Fadil Mokhchane \\ 
-\small \href{https://www.linkedin.com/in/fadil/}{LinkedIn} }\par
+\small \href{https://www.linkedin.com/in/fadil/}{CV on LinkedIn} }\par
 \vspace{1cm}
 \includegraphics[width=0.3\textwidth]{img/harrington.jpg}\par
 \vfill
 \vspace*{2\drop}
-{\scshape September 1, 2017}\par
+{\scshape September 3, 2017}\par
 {\scshape \small Version 1.0}\par
 \endgroup}
 \makeatother
@@ -117,6 +118,7 @@ we may get the following results. As the results are random, these particular re
 	\item 3: 0 times 
 \end{itemize}
 
+%-------------------------------------------------------------------------------
 \section{The Problem}
 \label{sec:problem}
 We interpret the question as the following the mathematical problem. 
@@ -187,6 +189,7 @@ we can pick an $x_i$, described in \autoref{eq:invcdf}.
 \end{equation}
 This process gives us a weighted probability pseudo random number engine.
 
+%-------------------------------------------------------------------------------
 \section{Solution Proposed}
 \subsection{Overview}
 
@@ -283,12 +286,33 @@ time ./dist/build/MAN-AHL/MAN-AHL -run=Weighted -nSims=1000000
 \end{center}
 \end{figure}
 
-
+%-------------------------------------------------------------------------------
 \section{Implementation}
 
 We use Haskell as implementation language. It is a purely functional language.
 It has a strong type system. It is all about types, they tell the story.
-In this section, we inztroduce the key types used thoughout the application.
+In this section, we introduce the key types used thoughout the application.
+
+\subsection{General Notes}
+We use efficient data structures as appropriate and we modelise the problem using
+the whole power of Haskell. 
+We use \emph{newtype} as much as possible as it allows design at a 
+seemless cost.
+
+Indeed, we use parametric and ad hoc polymorphism as needs be.
+We modelise the exception handling using different techniques, depending on
+the context, let it be \emph{Either a b}, \emph{Maybe a} or \emph{error}. 
+
+The aim was to keep the software as simple as possible while targetting a
+good design and performance. 
+The right balance is always difficult to achieve as unfortunately no 
+software is ever perfect.
+
+The code is documented while we believe that a simple and well organised
+code needs less documentation. The complexities are presented in the key
+area of the code. The code is presented in \autoref{apx:code}.
+
+Any constructive feedback is most welcome.
 
 \subsection{Analytics Module}
 
@@ -380,8 +404,14 @@ back the result into the \emph{Result} to provide a single function achieving
 everything we need.
 
 \subsection{Testing Module}
+We modelise a \emph{TestSuite} as a list of \emph{Test}.
+Each \emph{Test} can be of different type: QuickCheck type - 
+using a pseudo random data, 
+an IO type - an action that need to be run, e.g. performance tests, 
+and a Pure kind of test, for pure computation action.
 
-\section{Automated Unit and Integration Testing}
+%-------------------------------------------------------------------------------
+\section{Unit and Integration Testing}
 We need to test each module independtly, i.e. unit testing, and all used 
 together, i.e. integration testing.
 
@@ -424,6 +454,9 @@ is the generation of PDF pillars.
 We tried to pick a realistic sample :
 The pillars can have 1 to 10 pillars. Their summed probability are always less 
 than or equal to 1.  Each probability is within the $]0, 1]$ bound.
+
+We felt that the number of pillars was meant to be small. It is unlikely
+the software will be used with a million pillars. 
 
 \subsection{Analytics Testing} 
 These are the unit tests for the Analytics only.
@@ -521,15 +554,124 @@ We test that the API produce what is expected.
 	We test that for given a Query, we produce the expected Result.
 \end{description}
 
-\section{Qualitative Testing}
+%-------------------------------------------------------------------------------
+\section{Qualitative Analysis}
+We realise that we maybe be beyond the scope of the initial
+question, which was to implement a \emph{nextNum} function.
+However how to test it efficiently ? It is a very hard question.
 
-\section{Performance Testing}
+It is an important part of Software Engineering and 
+Quantitative Development to understand the 
+meaning of what we are trying to achieve. 
+It allows better modelisation, algoritms and testing. 
+In this section, we will look at the number generated and try
+to find the best parameters for this software.
 
-\section{Possible Extension}
+\subsection{Metrics}
+To assess the quality of a random number engine, we use
+simple statistics. It would have been nice to have time to 
+study further statistical and mathematical papers related 
+to the random numbers generation and probabilities.
+We could have created with more advanced metrics.
+
+There are two keys elements which drive the results :
+the input discrete probability function with $k$ pillars and
+the output discrete probability function deducted from a
+simulation of $n$ random numbers.
+
+Hence we look at different input PDF with various $k$,
+and the output PDF with various $n$. 
+This data gives us intuitions about what are the right
+parameters, $n$ and $k$ to use for our engines.
+
+We also have two random numbers generator, 
+Mersenne and Ecuyer, available. We compare them thoughout.
+
+As our weighted probability engine depends on
+the uniform probability engine. 
+We test first the uniform engine.
+
+The metrics we look at are:
+\begin{itemize}
+	\item the difference between the input and output pdf,
+	\item the standard deviation of these differences,
+	\item the mean of these difference, hopefully close to zero.
+\end{itemize}
+
+\subsection{Uniform Distribution}
+
+The input PDF for a uniform distribution is flat. The probabilities
+should be the same for each bucket. 
+
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A gull}
+        \label{fig:gull}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A tiger}
+        \label{fig:tiger}
+    \end{subfigure}
+
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A gull}
+        \label{fig:gull}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A tiger}
+        \label{fig:tiger}
+    \end{subfigure}
+
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A gull}
+        \label{fig:gull}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{img/uni-m-1.png}
+        \caption{A tiger}
+        \label{fig:tiger}
+    \end{subfigure}
+    \caption{Pictures of animals}\label{fig:animals}
+\end{figure}
+
+
+\subsection{Weighted Distribution}
+
+%-------------------------------------------------------------------------------
+\section{Performance Analysis}
+
+\subsection{Complexity Analysis}
+
+\subsection{Uniform Engine Performance}
+
+\subsection{Weighted Engine Performance}
+
+%-------------------------------------------------------------------------------
+\section{Conclusion}
+
+%-------------------------------------------------------------------------------
+\section{Possible Extensions}
 Here is a list of possible extension we could add.
 \begin{description}
 	\item [Analytics]
 	Further abstract the PDF, CDF, InvCDF to handle all kind of keys.
+	\item [Code Design]
+	We wonder if there was a way to avoid the \emph{MultiParamTypeClasses}
+	extension and to achieve a better design. 
+	Unfortunately time didn't allow further explorations.
 	\item [Testing]
 	We could run the tests on different environments to ensure the portability of 
 	the code.
@@ -644,7 +786,10 @@ database scheme.
 \addcontentsline{toc}{chapter}{Appendices}
 
 \chapter{Code} \label{apx:code}
-We provide below the code.
+We provide below the code. It is screenshots from 
+\href{https://vim.sourceforge.io/}{Vim} with the 
+\href{https://github.com/begriffs/haskell-vim-now}{haskell-vim-now}.
+extension.
 
 
 %-------------------------------------------------------------------------------
@@ -656,15 +801,13 @@ Here are the steps to install the App.
 	\item Download Haskell via this \href{https://www.haskell.org/platform/}{link}.
 	\item Install following the instructions given by the installer.
 	\item Use cabal to download the require packages :
-\begin{lstlisting}[
-           language=SQL,
-           showspaces=false,
-           basicstyle=\ttfamily,
-           numbers=left,
-           numberstyle=\tiny,
-           commentstyle=\color{gray}
-        ]
-	cabal install TBC
-\end{lstlisting}
+\begin{itemize}
+	\item mersenne-random-pure64
+	\item countainers
+	\item random
+	\item mtl
+	\item QuickCheck
+	\item deepseq
+\end{itemize}
 \end{enumerate}
 \end{document}
