@@ -37,7 +37,7 @@ propWeightedProba rT =
     Test.runWith 10 $ forAll genPdfPillars $ \ pdfP ->
       let e = case mkEngineParams pdfP of
             Left s -> error s; Right x -> x
-          stats = computeStats (Just e) rng
+          stats = computeStats e rng
                     (allStats 1000000 :: StatWPEngine WeightedStats)
           pdf' = pdf e
           (Just proba) = hsProba stats
@@ -64,7 +64,8 @@ propPerf rT =
       let e'= mkEngineParams pdfP
           e = case e' of Left s -> error s; Right x -> x
       t <- QC.run $ time $
-              computeStats (Just e) rng (allStats 100000 :: StatWPEngine WeightedStats)
+              computeStats e rng
+                (allStats 100000 :: StatWPEngine WeightedStats)
       let res = t < 0.4
       unless res $
         QC.run $ printf "Time %s: %0.9f sec" (show rT) t

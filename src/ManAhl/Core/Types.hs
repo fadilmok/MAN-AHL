@@ -43,8 +43,7 @@ data UniformRNGType = Ecuyer | Mersenne
 -- | PDF Pillars
 newtype PdfPillars = PdfPillars [(Int, Double)]
   deriving (Show, Eq)
--- | Discrete PieceWise Curve
--- modelised using a TreeMap
+-- | Discrete PieceWise Curve modelised using a TreeMap
 newtype PieceWiseCurve a b = PieceWiseCurve { unPWC :: Map a b }
   deriving Show
 -- | Discrete Probabily Density Function,
@@ -60,6 +59,7 @@ newtype InvCDF = InvCDF { unICDF :: PieceWiseCurve Double (Maybe Int) }
 newtype Distribution a = Distribution { unDist :: PieceWiseCurve a Int }
   deriving (Show, Eq, Curve a Int, NFData)
 
+-- | Operations on a Curve.
 class Curve b c a | a -> b, a -> c where
   emptyCurve :: a
   -- | O(1) Nb of Pillars
@@ -94,11 +94,12 @@ class Distri a where
 -- | Weighted Probability Engine Params
 -- contains the PDF, CDF, inverseCDF
 -- needed to compute the weighted probabilities
-data EngineParams = EngineParams {
+data EngineParams =
+  WeightedEngineParams {
     pdf     :: PDF
    ,cdf     :: CDF
    ,iCdf    :: !InvCDF
-  }
+  } | UniformEngineParams
 
 -- | Statistic of a given Run [a]
 --  hsDistri : represent the distribution of the  elements
@@ -115,19 +116,20 @@ type WeightedStats = Stats (Maybe Int)
 -- | Class to compute probabilities given an engine.
 class Monad a => ProbaEngine a b | a -> b where
   -- | Compute the probabilities
-  computeProba :: Maybe EngineParams -> UniformRNG -> a c -> c
+  computeProba :: EngineParams -> UniformRNG -> a c -> c
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
   nextNums :: Int -> a [b]
   nextNums n = replicateM n nextNum
 
+-- | Class to compute the statistics given an egine
 class Monad a => StatEngine a b | a -> b where
-
-  computeStats :: Maybe EngineParams -> UniformRNG -> a (Stats b) -> (Stats b)
-
+  -- | Compute the statistics
+  computeStats :: EngineParams -> UniformRNG -> a (Stats b) -> (Stats b)
+  -- | Prepare the next Statistic computation
   nextStat :: a (Stats b)
-
+  -- | Compute all the statistic for the n next random numbers
   allStats :: Int -> a (Stats b)
   allStats 0 = error "You need at least one element"
   allStats n = allStats' (n - 1) nextStat
@@ -156,6 +158,8 @@ newtype StatWPEngine a = StatWPEngine {
   } deriving (
       Functor, Applicative, Monad, MonadState (WeightedStats, UniformRNG),
       MonadReader EngineParams)
+
+-- Instances
 
 instance Functor (PieceWiseCurve a) where
   fmap f (PieceWiseCurve m) = PieceWiseCurve $ Map.map f m

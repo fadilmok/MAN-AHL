@@ -25,19 +25,19 @@ mkEngineParams pdfP =
   either
       (\ msg -> Left msg)
       (\ p -> let cdf' = mkCdf p in
-        Right EngineParams {
+        Right WeightedEngineParams {
             pdf = p
            ,cdf = cdf'
            ,iCdf = mkInvCdf cdf'
          }) $ mkPdf pdfP
 
 instance ProbaEngine ProbaWPEngine (Maybe Int) where
-  computeProba (Just p) uniRng e =
+  computeProba p uniRng e =
     flip evalState uniRng $
       runReaderT (unPWPE e) p
 
   nextNum = do
-    EngineParams _ _ iCdf <- ask
+    WeightedEngineParams _ _ iCdf <- ask
     uniRng <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
     put r
@@ -45,14 +45,14 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) where
     return y
 
 instance StatEngine StatWPEngine (Maybe Int) where
-  computeStats (Just p) uniRng e = let
+  computeStats p uniRng e = let
       s = flip evalState
         (Stats defaultDist 0 Nothing, uniRng) $
           runReaderT (unSWP e) p
        in s{ hsProba = Just $ probabilities $ hsDistri s }
 
   nextStat = do
-    EngineParams _ _ iCdf <- ask
+    WeightedEngineParams _ _ iCdf <- ask
     (Stats cs n _, uniRng) <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
         !y = invCdf iCdf x

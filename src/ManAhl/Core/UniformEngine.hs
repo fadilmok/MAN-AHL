@@ -25,8 +25,10 @@ instance RandomGen UniformRNG where
   next (RandomMersenne rng) = let (x, r) = next rng in (x, RandomMersenne r)
   genRange (RandomEcuyer rng)   = genRange rng
   genRange (RandomMersenne rng) = genRange rng
-  split (RandomEcuyer rng)   = let (g1, g2) = split rng in (RandomEcuyer g1, RandomEcuyer g1)
-  split (RandomMersenne rng) = let (g1, g2) = split rng in (RandomMersenne g1, RandomMersenne g2)
+  split (RandomEcuyer rng)   = let (g1, g2) = split rng in
+                                   (RandomEcuyer g1, RandomEcuyer g1)
+  split (RandomMersenne rng) = let (g1, g2) = split rng in
+                                   (RandomMersenne g1, RandomMersenne g2)
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
