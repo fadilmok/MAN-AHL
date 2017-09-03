@@ -1,6 +1,5 @@
-{-# OPTIONS_GHC -O2 #-}
 {-# LANGUAGE BangPatterns, MultiParamTypeClasses  #-}
-module ManAhl.Core.Random(
+module ManAhl.Core.UniformEngine(
   -- * Creation
   mkUniformRNG,
   -- * Engines

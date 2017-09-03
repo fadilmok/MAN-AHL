@@ -1,7 +1,6 @@
-{-# OPTIONS_GHC -O2 #-}
 {-# LANGUAGE BangPatterns, MultiParamTypeClasses, FlexibleInstances #-}
 -- | The weighted proba engine
-module ManAhl.Core.Engine(
+module ManAhl.Core.WeightedEngine(
   -- * Creation
   mkEngineParams,
   -- * Engines
@@ -10,7 +9,7 @@ module ManAhl.Core.Engine(
 ) where
 
 import ManAhl.Core.Types
-import ManAhl.Core.Random
+import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
 
 import Data.List (foldl')

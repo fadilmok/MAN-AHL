@@ -8,9 +8,9 @@ module ManAhl.CLI(
 ) where
 
 import ManAhl.Core.Types
-import ManAhl.Core.Random
+import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
-import ManAhl.Core.Engine
+import ManAhl.Core.WeightedEngine
 
 import Control.DeepSeq
 import Data.List
