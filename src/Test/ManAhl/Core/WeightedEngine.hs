@@ -20,12 +20,13 @@ import Text.Printf (printf)
 
 -- | List of tests related to the engine
 tests :: TestSuite
-tests = [
-    ("Engine distri check - Mersene", propWeightedProba Mersenne)
-   ,("Engine distri check - Ecuyer",  propWeightedProba Ecuyer)
-   ,("Engine fail",                   testEngineFail)
-   ,("Engine Perf - Mersene",         propPerf Mersenne)
-   ,("Engine Perf - Ecuyer",          propPerf Ecuyer)
+tests = map (\(x, y) -> ("Weighted Engine - " ++ x, y))
+  [
+    ("distri check - Mersene", propWeightedProba Mersenne)
+   ,("distri check - Ecuyer",  propWeightedProba Ecuyer)
+   ,("fail",                   testEngineFail)
+   ,("Perf - Mersene",         propPerf Mersenne)
+   ,("Perf - Ecuyer",          propPerf Ecuyer)
   ]
 
 -- | Test that we recover the input probabilities
@@ -51,7 +52,8 @@ testEngineFail = TestPure $ const $
       negativePro = isLeft $ mkEngineParams $ PdfPillars [(1, -1)]
       nullPro = isLeft $ mkEngineParams $ PdfPillars []
       nullPro2 = isLeft $ mkEngineParams $ PdfPillars [(1,0)]
-      greaterPro = isLeft $ mkEngineParams $ PdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
+      greaterPro = isLeft $ mkEngineParams $
+                      PdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
 
 -- | Test that the performance of the Engine remain acceptable
 propPerf :: UniformRNGType -> Test

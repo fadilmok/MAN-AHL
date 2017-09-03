@@ -12,8 +12,8 @@ import Control.Monad
 -- | Testsuite
 tests :: TestSuite
 tests = [
-    ("CLI Query", testQuery)
-   ,("CLI Run",   testRun)
+    ("CLI - Query", testQuery)
+   ,("CLI - Run",   testRun)
   ]
 
 -- | Test the creation of a query from the arguments

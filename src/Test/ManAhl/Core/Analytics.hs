@@ -30,6 +30,10 @@ instance Arbitrary PDF where
 instance Arbitrary CDF where
   arbitrary = mkCdf `liftM` arbitrary
 
+-- Instance to create correct PDFs
+instance Arbitrary InvCDF where
+  arbitrary = mkInvCdf `liftM` arbitrary
+
 -- Generatoring input for the inverseCDF testing
 genInvCdfQuery :: Gen (PDF, [Double])
 genInvCdfQuery = do
@@ -40,7 +44,8 @@ genInvCdfQuery = do
 
 -- Testsuite
 tests :: TestSuite
-tests = [
+tests = map (\(x, y) -> ("Analytics - " ++ x, y))
+  [
     ("InvCDF Creation",                 propInvCdfFromPdfComplete)
    ,("CDF and PDF pillars check",       propCdfPdfPillars)
    ,("PDF stable with reverse Pillars", propPdfStable)
@@ -59,8 +64,8 @@ propInvCdfFromPdfComplete :: Test
 propInvCdfFromPdfComplete =
   TestQC $ run $ \pdf ->
     let iCdf = mkInvCdf $ mkCdf pdf
-        pillarsCdf = toPillars iCdf
-     in fst (last pillarsCdf) == 1
+        lastP = fst $ last $ toPillars iCdf
+     in abs ( lastP - 1) <= 0.0001
 
 -- | Ensure that the PDF and CDF have the correct number of pillars
 propCdfPdfPillars :: Test
@@ -87,7 +92,8 @@ propPdfStable =
 propPdfConsistency :: Test
 propPdfConsistency =
   TestQC $ run $ \ (pdf :: PDF) ->
-    cFoldl (\acc x -> x + acc) 0 pdf <= 1
+    let s = cFoldl (\acc x -> x + acc) 0 pdf
+     in abs (s - 1) <= 0.0001
 
 -- | Ensure that the inverseCdf recovers the correct pdf pillars
 propInvCdfValid :: Test

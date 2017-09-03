@@ -162,7 +162,7 @@ instance Functor (PieceWiseCurve a) where
 
 instance {-# OVERLAPS #-} Eq (PieceWiseCurve (Maybe Int) Double) where
   PieceWiseCurve lhs == PieceWiseCurve rhs =
-    Map.foldl (\acc x -> if not acc then False else x < 0.0001) True $
+    Map.foldl (\acc x -> if not acc then False else x < 0.001) True $
       Map.unionWith (-) lhs rhs
 
 instance {-# OVERLAPS #-} Eq (PieceWiseCurve Double (Maybe Int)) where

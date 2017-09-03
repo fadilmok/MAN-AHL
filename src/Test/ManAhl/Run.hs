@@ -24,7 +24,7 @@ main = do
       UniformEngine.tests ++
       WeightedEngine.tests
    ) $ \ (name, test) -> do
-           printf "%-35s:" name
+           printf "%-45s:" name
            runTest test
 
   unless (all (==True) success)

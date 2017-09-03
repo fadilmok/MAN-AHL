@@ -19,15 +19,16 @@ import ManAhl.Core.Analytics
 
 -- | List of tests
 tests :: TestSuite
-tests = [
+tests = map (\(x, y) -> ("Uniform Engine - " ++ x, y))
+  [
     ("Ecuyer Mean and Std",   propMeanStd Ecuyer)
    ,("Mersenne Mean And Std", propMeanStd Mersenne)
    ,("Ecuyer Bounds",         propBounds Ecuyer)
    ,("Mersenne Bounds",       propBounds Mersenne)
    ,("Mersenne Uniform",      propUniform Mersenne)
    ,("Ecuyer Uniform",        propUniform Ecuyer)
-   ,("Uniform Mersenee Perf", propPerf Mersenne)
-   ,("Uniform Ecuyer Perf",   propPerf Ecuyer)
+   ,("Mersenee Perf",         propPerf Mersenne)
+   ,("Ecuyer Perf",           propPerf Ecuyer)
   ]
 
 -- | Test that the standard deviation and mean of the uniform
@@ -63,7 +64,6 @@ propUniform rT =
               else round (x * 100) ==
                 round (100 / fromIntegral (nPillars $ hsDistri stats))) True proba
 
-
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable
 propPerf :: UniformRNGType -> Test
@@ -72,9 +72,9 @@ propPerf rT =
     Test.runWith 10 $ monadicIO $
   do
     t <- QC.run $ time $
-            computeStats Nothing rng (allStats 1000000 :: StatUniEngine UniStats)
+            computeStats Nothing rng (allStats 100000 :: StatUniEngine UniStats)
 
-    let res = t < 0.4
+    let res = t < 0.45
     unless res $ do
       QC.run $ printf "Time %s: %0.9f sec" (show rT) t
     assert res
