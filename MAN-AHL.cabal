@@ -13,7 +13,7 @@ maintainer:          fadil.mokhchane@gmail.com
 -- copyright:           
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md, README.md
+extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable MAN-AHL
