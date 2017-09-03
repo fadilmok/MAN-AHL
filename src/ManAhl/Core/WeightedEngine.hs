@@ -44,23 +44,23 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) where
     let !y = invCdf iCdf x
     return y
 
-instance StatEngine StatWPEngine where
+instance StatEngine StatWPEngine (Maybe Int) where
   computeStats (Just p) uniRng e = let
       s = flip evalState
-        (WPStats defaultDist 0 Nothing, uniRng) $
+        (Stats defaultDist 0 Nothing, uniRng) $
           runReaderT (unSWP e) p
-       in s{ hsProbaWP = Just $ probabilities $ hsDistriWP s }
+       in s{ hsProba = Just $ probabilities $ hsDistri s }
 
   nextStat = do
     EngineParams _ _ iCdf <- ask
-    (WPStats cs n _, uniRng) <- get
+    (Stats cs n _, uniRng) <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
         !y = invCdf iCdf x
 
-        !stats = WPStats {
-            hsDistriWP    = increaseCount y cs
+        !stats = Stats {
+            hsDistri      = increaseCount y cs
            ,hsTotalCount  = n + 1
-           ,hsProbaWP     = Nothing
+           ,hsProba       = Nothing
           }
     put (stats, r)
     return stats

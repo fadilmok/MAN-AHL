@@ -38,18 +38,18 @@ instance ProbaEngine ProbaUniEngine Double where
 
   nextNum = state $! randomR (0, 1)
 
-instance StatEngine StatUniEngine where
+instance StatEngine StatUniEngine Double where
   computeStats _ r e = let
-      s = evalState (unSUE e) (UniStats defaultDist 0 Nothing, r)
-   in s{ hsProbaUni = Just $ probabilities $ hsDistriUni s }
+      s = evalState (unSUE e) (Stats defaultDist 0 Nothing, r)
+   in s{ hsProba = Just $ probabilities $ hsDistri s }
 
   nextStat = do
-    (UniStats cs n _, uniRng) <- get
+    (Stats cs n _, uniRng) <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
-        !stats = UniStats {
-            hsDistriUni   = increaseCount x cs
+        !stats = Stats {
+            hsDistri      = increaseCount x cs
            ,hsTotalCount  = n + 1
-           ,hsProbaUni    = Nothing
+           ,hsProba       = Nothing
           }
     put (stats, r)
     return stats

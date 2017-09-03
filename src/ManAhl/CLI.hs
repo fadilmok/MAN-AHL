@@ -36,6 +36,10 @@ instance NFData Query where
   rnf (RunWeightedWith (PdfPillars p) n u) = rnf p `seq` rnf n
   rnf (RunUniformWith n u) = rnf n
 
+data Result =
+      ResultWeighted WeightedStats
+    | ResultUniform UniStats
+
 -- | The run type using either the weighted probability or
 -- uniform probability engine
 data RunType = Weighted | Uniform
@@ -54,9 +58,9 @@ showRes name stats proba n = unlines $
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
 
-instance Show Stats where
-  show (WPStats stats n (Just proba)) = showRes "Weighted" stats proba n
-  show (UniStats stats n (Just proba)) = showRes "Uniform" stats proba n
+instance Show Result where
+  show (ResultWeighted (Stats stats n (Just proba))) = showRes "Weighted" stats proba n
+  show (ResultUniform (Stats stats n (Just proba))) = showRes "Weighted" stats proba n
   show _ = "Error"
 
 -- | Parse the input argument into a query.
@@ -85,18 +89,18 @@ parse xs = do
         else Nothing
 
 -- | Run a given query using the appropriate engine
-run :: Query -> IO (Either String Stats)
+run :: Query -> IO (Either String Result)
 run (RunUniformWith nSims rngT) = do
   rng <- mkUniformRNG rngT
-  return $ Right $
-    computeStats Nothing rng (allStats nSims :: StatUniEngine Stats)
+  return $ Right $ ResultUniform $
+    computeStats Nothing rng (allStats nSims :: StatUniEngine UniStats)
 run (RunWeightedWith pdfPillars nSims rngT) = do
   rng <- mkUniformRNG rngT
   let p = mkEngineParams pdfPillars
   return $ case p of
     Left s -> Left s
-    Right e -> Right $
-      computeStats (Just e) rng (allStats nSims :: StatWPEngine Stats)
+    Right e -> Right $ ResultWeighted $
+      computeStats (Just e) rng (allStats nSims :: StatWPEngine WeightedStats)
 
 -- | Give the CLI help
 help :: [(String, String)]

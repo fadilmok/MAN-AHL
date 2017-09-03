@@ -16,7 +16,7 @@ module ManAhl.Core.Types(
   UniformRNGType(..),
   UniformRNG(..),
   EngineParams(..),
-  Stats(..),
+  Stats(..), UniStats, WeightedStats,
   Distri(..),
   Curve(..)
 ) where
@@ -125,17 +125,14 @@ data EngineParams = EngineParams {
 -- | Statistic of a given Run [a]
 --  hsDistri : represent the distribution of the  elements
 --  hsTotalCount : the total nb of element
-data Stats =
-  WPStats {
-    hsDistriWP    :: !(Distribution (Maybe Int))
+data Stats a =
+  Stats {
+    hsDistri      :: !(Distribution a)
    ,hsTotalCount  :: !Int
-   ,hsProbaWP     :: Maybe [(Maybe Int, Double)]
+   ,hsProba       :: Maybe [(a, Double)]
   }
-  | UniStats {
-    hsDistriUni   :: !(Distribution Double)
-   ,hsTotalCount  :: !Int
-   ,hsProbaUni    :: Maybe [(Double, Double)]
-  }
+type UniStats = Stats Double
+type WeightedStats = Stats (Maybe Int)
 
 -- | Class to compute probabilities given an engine.
 class Monad a => ProbaEngine a b | a -> b where
@@ -147,13 +144,13 @@ class Monad a => ProbaEngine a b | a -> b where
   nextNums :: Int -> a [b]
   nextNums n = replicateM n nextNum
 
-class Monad a => StatEngine a where
+class Monad a => StatEngine a b | a -> b where
 
-  computeStats :: Maybe EngineParams -> UniformRNG -> a Stats -> Stats
+  computeStats :: Maybe EngineParams -> UniformRNG -> a (Stats b) -> (Stats b)
 
-  nextStat :: a Stats
+  nextStat :: a (Stats b)
 
-  allStats :: Int -> a Stats
+  allStats :: Int -> a (Stats b)
   allStats 0 = error "You need at least one element"
   allStats n = allStats' (n - 1) nextStat
     where
@@ -166,8 +163,8 @@ newtype ProbaUniEngine a = ProbaUniEngine { unPUIE :: State UniformRNG a }
 
 -- | Cumulative Statistic Engine for a Uniform distribution
 newtype StatUniEngine a = StatUniEngine {
-    unSUE :: State (Stats, UniformRNG) a  }
-  deriving (Functor, Applicative, Monad, MonadState (Stats, UniformRNG))
+    unSUE :: State (UniStats, UniformRNG) a  }
+  deriving (Functor, Applicative, Monad, MonadState (UniStats, UniformRNG))
 
 -- | Weighted Probility Engine
 newtype ProbaWPEngine a = ProbaWPEngine {
@@ -177,9 +174,9 @@ newtype ProbaWPEngine a = ProbaWPEngine {
 
 -- | Cumulative Statistic Engine for a Weighted distribution
 newtype StatWPEngine a = StatWPEngine {
-    unSWP :: ReaderT EngineParams (State (Stats, UniformRNG)) a
+    unSWP :: ReaderT EngineParams (State (WeightedStats, UniformRNG)) a
   } deriving (
-      Functor, Applicative, Monad, MonadState (Stats, UniformRNG),
+      Functor, Applicative, Monad, MonadState (WeightedStats, UniformRNG),
       MonadReader EngineParams)
 
 instance Functor (PieceWiseCurve a) where
