@@ -3,7 +3,7 @@ module ManAhl.CLI(
   parse,
   run,
   help,
-  Query(..), Result(..),
+  Query(..),
   pillarsDefault
 ) where
 
@@ -41,27 +41,23 @@ instance NFData Query where
 data RunType = Weighted | Uniform
   deriving (Show, Read)
 
--- | Encapsulated the Result of a run
--- its statistics and probabilities
-data Result =
-   ResultWeighted (Stats (Maybe Int)) [(Maybe Int, Double)]
-  |ResultUniform  (Stats Double) [(Double, Double)]
-
 -- | Helper to display the Results nicely
-showRes :: Show a => String -> Stats a -> [(a, Double)] -> String
-showRes name (Stats count n) proba = unlines $ [
+showRes :: Show a => String -> Distribution a -> [(a, Double)] -> Int -> String
+showRes name stats proba n = unlines $
+     [
       "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
      ,"Probabilities:"
      ] ++ showList' proba
      ++ ["", "Distribution:"]
-     ++ showList' (toList $ unPWC $ unDist count)
+     ++ showList' (toList $ unPWC $ unDist stats)
   where
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
 
-instance Show Result where
-  show (ResultWeighted stats proba) = showRes "Weighted" stats proba
-  show (ResultUniform stats proba) = showRes "Uniform" stats proba
+instance Show Stats where
+  show (WPStats stats n (Just proba)) = showRes "Weighted" stats proba n
+  show (UniStats stats n (Just proba)) = showRes "Uniform" stats proba n
+  show _ = "Error"
 
 -- | Parse the input argument into a query.
 parse :: [String] -> Maybe Query
@@ -89,22 +85,18 @@ parse xs = do
         else Nothing
 
 -- | Run a given query using the appropriate engine
-run :: Query -> IO (Either String Result)
+run :: Query -> IO (Either String Stats)
 run (RunUniformWith nSims rngT) = do
   rng <- mkUniformRNG rngT
-  let res = runStatUni rng $ allUStats nSims
-      stats = probabilities res
-  return $
-    Right $ ResultUniform res stats
+  return $ Right $
+    computeStats Nothing rng (allStats nSims :: StatUniEngine Stats)
 run (RunWeightedWith pdfPillars nSims rngT) = do
   rng <- mkUniformRNG rngT
   let p = mkEngineParams pdfPillars
   return $ case p of
     Left s -> Left s
-    Right e -> let
-        res' = runStatEngine e rng $ allStats nSims
-        res = probabilities res'
-      in Right $ ResultWeighted res' res
+    Right e -> Right $
+      computeStats (Just e) rng (allStats nSims :: StatWPEngine Stats)
 
 -- | Give the CLI help
 help :: [(String, String)]

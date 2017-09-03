@@ -1,15 +1,11 @@
 {-# OPTIONS_GHC -O2 #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, MultiParamTypeClasses  #-}
 module ManAhl.Core.Random(
   -- * Creation
   mkUniformRNG,
-  -- ** Probabilities
-  nextVal, nextVals,
-  -- ** Statistics
-  nextUStat, allUStats,
-  -- * Execution
-  runProbaUni,
-  runStatUni
+  -- * Engines
+  ProbaUniEngine(),
+  StatUniEngine()
 ) where
 
 import ManAhl.Core.Types
@@ -38,47 +34,24 @@ mkUniformRNG :: UniformRNGType -> IO UniformRNG
 mkUniformRNG Ecuyer   = return . RandomEcuyer =<< newStdGen
 mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 
--- Compute bounded uniform probabilities
-runProbaUni :: UniformRNG -> ProbaUniEngine a -> a
-runProbaUni r e = evalState e r
+instance ProbaEngine ProbaUniEngine Double where
+  computeProba _ r e = evalState (unPUIE e) r
 
--- Compute the cumulative statistics for the uniform probabilities
-runStatUni :: UniformRNG -> StatUniEngine -> Stats Double
-runStatUni r e =
-  flip evalState r $
-    evalStateT e $ Stats doubleDistEmpty 0
+  nextNum = state $! randomR (0, 1)
 
--- | Engine to compute the next bounded uniform probability
-nextVal :: ProbaUniEngine Double
-nextVal = state $! randomR (0, 1)
+instance StatEngine StatUniEngine where
+  computeStats _ r e = let
+      s = evalState (unSUE e) (UniStats doubleDistEmpty 0 Nothing, r)
+   in s{ hsProbaWP = Just $ probabilities $ hsDistriWP s }
 
--- | Engine to compute n next bounded uniform probabilities
-nextVals :: Int -> ProbaUniEngine [Double]
-nextVals n = replicateM n nextVal
-
--- | Engine to compute the next cumulative stastitics for
--- a bounded uniform distribution
-nextUStat :: StatUniEngine
-nextUStat = do
-  uniRng <- lift get
-  let (!x, !r) = runState nextVal uniRng
-  lift $ put r
-  Stats cs n <- get
-  let !stats = Stats {
-          hsDistri = add cs x
-         ,hsTotalCount = n + 1
-        }
-  put stats
-  return stats
-
--- | Engine to compute the cumulative statistics for n
--- weighted probabilities
--- It fails if n is 0.
-allUStats :: Int -> StatUniEngine
-allUStats 0 = error "You need at least one element"
-allUStats n = allStats' (n-1) nextUStat
-  where
-    allStats' :: Int -> StatUniEngine -> StatUniEngine
-    allStats' 0 acc = acc
-    allStats' !n acc = allStats' (n - 1) $ acc >> nextUStat
+  nextStat = do
+    (UniStats cs n _, uniRng) <- get
+    let (!x, !r) = runState (unPUIE nextNum) uniRng
+        !stats = UniStats {
+            hsDistriUni   = add x cs
+           ,hsTotalCount  = n + 1
+           ,hsProbaUni    = Nothing
+          }
+    put (stats, r)
+    return stats
 

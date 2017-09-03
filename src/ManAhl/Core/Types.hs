@@ -1,11 +1,14 @@
-{-# LANGUAGE BangPatterns, FlexibleInstances #-}
+{-# LANGUAGE BangPatterns, FlexibleInstances,
+          GeneralizedNewtypeDeriving, MultiParamTypeClasses,
+          FunctionalDependencies #-}
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
   -- * Engines
-  ProbaUniEngine,
-  StatUniEngine,
-  ProbaWPEngine,
-  StatWPEngine,
+  ProbaEngine(..), StatEngine(..),
+  ProbaUniEngine(..),
+  StatUniEngine(..),
+  ProbaWPEngine(..),
+  StatWPEngine(..),
   -- * Types
   PieceWiseCurve(..), PdfPillars(..),
   CDF(..), PDF(..), InvCDF(..),
@@ -13,13 +16,15 @@ module ManAhl.Core.Types(
   UniformRNGType(..),
   UniformRNG(..),
   EngineParams(..),
-  Stats(..)
+  Stats(..),
+  Distri(..)
 ) where
 
+import Control.Monad
 import Control.Monad.State.Strict
 import Control.Monad.Reader
 import Data.Map.Strict as Map
-import qualified System.Random as Ecuyer
+import System.Random as Ecuyer
 import qualified System.Random.Mersenne.Pure64 as Mersenne
 
 -- | Uniform Random Number generator,
@@ -53,6 +58,9 @@ newtype InvCDF = InvCDF { unICDF :: PieceWiseCurve Double (Maybe Int) }
 newtype Distribution a = Distribution { unDist :: PieceWiseCurve a Int }
   deriving (Show, Eq)
 
+class Distri a where
+  add :: a -> Distribution a -> Distribution a
+
 -- | Weighted Probability Engine Params
 -- contains the PDF, CDF, inverseCDF
 -- needed to compute the weighted probabilities
@@ -65,22 +73,60 @@ data EngineParams = EngineParams {
 -- | Statistic of a given Run [a]
 --  hsCount : represent the distribution of the  elements
 --  hsTotalCount : the total nb of element
-data Stats a = Stats {
-    hsDistri      :: !(Distribution a)
+data Stats =
+  WPStats {
+    hsDistriWP    :: !(Distribution (Maybe Int))
    ,hsTotalCount  :: !Int
-  } deriving Show
+   ,hsProbaWP     :: Maybe [(Maybe Int, Double)]
+  }
+  | UniStats {
+    hsDistriUni   :: !(Distribution Double)
+   ,hsTotalCount  :: !Int
+   ,hsProbaUni    :: Maybe [(Double, Double)]
+  }
+
+-- | Class to compute probabilities given an engine.
+class Monad a => ProbaEngine a b | a -> b where
+  -- | Compute the probabilities
+  computeProba :: Maybe EngineParams -> UniformRNG -> a b -> b
+  -- | Prepare the next random number
+  nextNum :: a b
+  -- | Prepare the n next random numbers
+  nextNums :: Int -> a [b]
+  nextNums n = replicateM n nextNum
+
+class Monad a => StatEngine a where
+
+  computeStats :: Maybe EngineParams -> UniformRNG -> a Stats -> Stats
+
+  nextStat :: a Stats
+
+  allStats :: Int -> a Stats
+  allStats 0 = error "You need at least one element"
+  allStats n = allStats' (n - 1) nextStat
+    where
+      allStats' 0 acc = acc
+      allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
 
 -- | Bounded Uniform Probability Engine
-type ProbaUniEngine a = State UniformRNG a
+newtype ProbaUniEngine a = ProbaUniEngine { unPUIE :: State UniformRNG a }
+  deriving (Functor, Applicative, Monad, MonadState UniformRNG)
+
 -- | Cumulative Statistic Engine for a Uniform distribution
-type StatUniEngine = StateT (Stats Double) (State UniformRNG) (Stats Double)
+newtype StatUniEngine a = StatUniEngine {
+    unSUE :: State (Stats, UniformRNG) a  }
+  deriving (Functor, Applicative, Monad, MonadState (Stats, UniformRNG))
 
 -- | Weighted Probility Engine
-type ProbaWPEngine a = ReaderT EngineParams (State UniformRNG) a
+newtype ProbaWPEngine a = ProbaWPEngine {
+     unPWPE :: ReaderT EngineParams (State UniformRNG) a
+   } deriving (
+      Functor, Applicative, Monad, MonadState UniformRNG, MonadReader EngineParams
+  )
 -- | Cumulative Statistic Engine for a Weighted distribution
-type StatWPEngine = ReaderT EngineParams (StateT (Stats (Maybe Int))
-                      (State UniformRNG)) (Stats (Maybe Int))
-
+newtype StatWPEngine a = StatWPEngine {
+    unSWP :: ReaderT EngineParams (State (Stats, UniformRNG)) a
+  } deriving (Functor, Applicative, Monad, MonadState (Stats, UniformRNG), MonadReader EngineParams)
 
 instance Functor (PieceWiseCurve a) where
   fmap f (PieceWiseCurve m) = PieceWiseCurve $ Map.map f m

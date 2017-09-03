@@ -32,14 +32,11 @@ PieceWiseCurve m !!! x =
       Just r -> r
       Nothing -> error $ "Fails: " ++ show x
 
-class Distri a where
-  add :: Distribution a -> a -> Distribution a
-
 instance Distri (Maybe Int) where
-  add (Distribution c) x = Distribution $ PieceWiseCurve $
+  add x (Distribution c) = Distribution $ PieceWiseCurve $
     Map.insertWith (+) x 1 $ unPWC c
 instance Distri Double where
-  add (Distribution c) x = Distribution $ PieceWiseCurve $
+  add x (Distribution c) = Distribution $ PieceWiseCurve $
     Map.insertWith (+)
          ( fst $ unDist doubleDistEmpty !!! x) 1 $ unPWC c
 
@@ -97,9 +94,10 @@ invCdf (InvCDF m) x = snd $ m !!! x
 
 -- | Compute the probabilities from the result distribution
 -- O(n)
-probabilities :: Stats a -> [(a, Double)]
-probabilities (Stats cs n)
+probabilities :: Distribution a -> [(a, Double)]
+probabilities cs
   = pillars $ fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist cs
+    where n = length $ pillars $ unDist cs
 
 -- | Compute the mean for a non empty list
 -- O(n)

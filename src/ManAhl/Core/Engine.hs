@@ -1,18 +1,12 @@
 {-# OPTIONS_GHC -O2 #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, MultiParamTypeClasses, FlexibleInstances #-}
 -- | The weighted proba engine
 module ManAhl.Core.Engine(
   -- * Creation
   mkEngineParams,
-  -- ** Probabilities
-  nextNum,
-  nextNums,
-  -- ** Statistics
-  nextStat,
-  allStats,
-  -- * Execution
-  runProbaEngine,
-  runStatEngine
+  -- * Engines
+  ProbaWPEngine(),
+  StatWPEngine()
 ) where
 
 import ManAhl.Core.Types
@@ -38,58 +32,37 @@ mkEngineParams pdfP =
            ,iCdf = mkInvCdf cdf'
          }) $ mkPdf pdfP
 
--- | Compute the weighted probabilities
-runProbaEngine :: EngineParams -> UniformRNG -> ProbaWPEngine a -> a
-runProbaEngine p uniRng e =
-  flip evalState uniRng $
-    runReaderT e p
+instance ProbaEngine ProbaWPEngine (Maybe Int) where
+  computeProba (Just p) uniRng e =
+    flip evalState uniRng $
+      runReaderT (unPWPE e) p
 
--- | Compute the cumulative statistic for the weighted probabilities
-runStatEngine :: EngineParams -> UniformRNG -> StatWPEngine -> Stats (Maybe Int)
-runStatEngine p uniRng e =
-  flip evalState uniRng $
-    flip evalStateT (Stats (Distribution $ PieceWiseCurve Map.empty) 0) $
-      runReaderT e p
+  nextNum = do
+    EngineParams _ _ iCdf <- ask
+    uniRng <- get
+    let (!x, !r) = runState (unPUIE nextNum) uniRng
+    put r
+    let !y = invCdf iCdf x
+    return y
 
--- | Engine to compute the next weighted probability
-nextNum :: ProbaWPEngine (Maybe Int)
-nextNum = do
-  EngineParams _ _ iCdf <- ask
-  uniRng <- get
-  let (!x, !r) = runState nextVal uniRng
-  put r
-  let !y = invCdf iCdf x
-  return y
+instance StatEngine StatWPEngine where
+  computeStats (Just p) uniRng e = let
+      s = flip evalState
+        (WPStats (Distribution $ PieceWiseCurve Map.empty) 0 Nothing, uniRng) $
+          runReaderT (unSWP e) p
+       in s{ hsProbaWP = Just $ probabilities $ hsDistriWP s }
 
--- | Engine to compute n next weighted probabilties
-nextNums :: Int -> ProbaWPEngine [Maybe Int]
-nextNums n = replicateM n nextNum
+  nextStat = do
+    EngineParams _ _ iCdf <- ask
+    (WPStats cs n _, uniRng) <- get
+    let (!x, !r) = runState (unPUIE nextNum) uniRng
+        !y = invCdf iCdf x
 
--- | Engine to compute the next cumulative statistics
-nextStat :: StatWPEngine
-nextStat = do
-  EngineParams _ _ iCdf <- ask
-  uniRng <- lift $ lift get
-  let (!x, !r) = runState nextVal uniRng
-  lift $ lift $ put r
-  let !y = invCdf iCdf x
-
-  Stats cs n <- get
-  let !stats = Stats {
-          hsDistri = add cs y
-         ,hsTotalCount = n + 1
-        }
-  put stats
-  return stats
-
--- | Engine to compute the cumulative statistics for n
--- weighted probabilities
--- It fails if n is 0
-allStats :: Int -> StatWPEngine
-allStats 0 = error "You need at least one element"
-allStats n = allStats' (n - 1) nextStat
-  where
-    allStats' :: Int -> StatWPEngine -> StatWPEngine
-    allStats' 0 acc = acc
-    allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
+        !stats = WPStats {
+            hsDistriWP    = add y cs
+           ,hsTotalCount  = n + 1
+           ,hsProbaWP     = Nothing
+          }
+    put (stats, r)
+    return stats
 
