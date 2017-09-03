@@ -47,7 +47,7 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) where
 instance StatEngine StatWPEngine where
   computeStats (Just p) uniRng e = let
       s = flip evalState
-        (WPStats (Distribution $ PieceWiseCurve Map.empty) 0 Nothing, uniRng) $
+        (WPStats defaultDist 0 Nothing, uniRng) $
           runReaderT (unSWP e) p
        in s{ hsProbaWP = Just $ probabilities $ hsDistriWP s }
 
@@ -58,7 +58,7 @@ instance StatEngine StatWPEngine where
         !y = invCdf iCdf x
 
         !stats = WPStats {
-            hsDistriWP    = add y cs
+            hsDistriWP    = increaseCount y cs
            ,hsTotalCount  = n + 1
            ,hsProbaWP     = Nothing
           }

@@ -1,5 +1,5 @@
 -- | Testsuite for the Engine
-module Test.ManAhl.Core.Engine(
+module Test.ManAhl.Core.WeightedEngine(
   tests
 ) where
 

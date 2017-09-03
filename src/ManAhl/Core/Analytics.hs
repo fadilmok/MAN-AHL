@@ -7,11 +7,7 @@ module ManAhl.Core.Analytics(
   invCdf,(!!!),
   -- * Statistics
   mean, stdDev,
-  probabilities,
-  -- * Modification
-  Distri(..),
-  -- * Other
-  doubleDistEmpty
+  probabilities
 ) where
 
 import Data.Function (on)
@@ -19,31 +15,6 @@ import Data.List
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import ManAhl.Core.Types
-
--- | O(n) return the pillars from a curve
-pillars :: PieceWiseCurve a b -> [(a, b)]
-pillars (PieceWiseCurve m) = Map.toList m
-
--- | O(log n) get the values associated to a key
--- it is unsafe throws an exception if it is out of bounds.
-(!!!) :: (Show a, Ord a) => PieceWiseCurve a b -> a -> (a, b)
-PieceWiseCurve m !!! x =
-  case x `Map.lookupGE` m of
-      Just r -> r
-      Nothing -> error $ "Fails: " ++ show x
-
-instance Distri (Maybe Int) where
-  add x (Distribution c) = Distribution $ PieceWiseCurve $
-    Map.insertWith (+) x 1 $ unPWC c
-instance Distri Double where
-  add x (Distribution c) = Distribution $ PieceWiseCurve $
-    Map.insertWith (+)
-         ( fst $ unDist doubleDistEmpty !!! x) 1 $ unPWC c
-
--- | Range used to compute the statistics
-doubleDistEmpty :: Distribution Double
-doubleDistEmpty = Distribution $ PieceWiseCurve $
-  Map.fromList $ zip (map (/100) [1, 2 .. 100]) [0..]
 
 -- | Creates discrete probability function.
 -- The pillars cannot be null, contain negative probability,
@@ -59,19 +30,17 @@ mkPdf (PdfPillars xs)
       Left "PDF Pillars contain negative values."
   | foldl (\ acc (_, x) -> acc + x) 0 xs > 1 =
       Left "The sum of PDF probabilities are greater than 1."
-  | otherwise = Right $ PDF $ PieceWiseCurve $
+  | otherwise = Right $
       let m = foldl (\ m (v, p) ->
-            if p == 0 then m else Map.insertWith (+) (Just v) p m)  Map.empty xs
+            if p == 0 then m else addWith (+) (Just v) p m) emptyCurve xs
           s = foldl (\acc (_, x)-> acc + x) 0 xs
-       in (if s < 1 then Map.insert Nothing (1 - s) else id) m
+       in (if s < 1 then add Nothing (1 - s) else id) m
 
 -- | Create a discrete cumulative function,
 -- it assumes the pdf is correct
 -- O(n)
 mkCdf :: PDF -> CDF
-mkCdf (PDF (PieceWiseCurve m)) =
-  CDF $ PieceWiseCurve $
-            Map.fromList $ Map.foldlWithKey go [] m
+mkCdf = fromPillars . Map.foldlWithKey go [] . toRaw
   where
     go [] x p = [(x, p)]
     go (y:ys) x p = (x, p + snd y) : y : ys
@@ -80,10 +49,7 @@ mkCdf (PDF (PieceWiseCurve m)) =
 -- it assumes the cdf is correct
 -- O(n)
 mkInvCdf :: CDF -> InvCDF
-mkInvCdf (CDF curve) =
-  InvCDF .
-    PieceWiseCurve .
-      Map.fromList . Prelude.map (\(x, y) -> (y, x)) . pillars $ curve
+mkInvCdf = fromPillars . Prelude.map (\(x, y) -> (y, x)) . toPillars
 
 -- | Inverse cdf function,
 -- it assumes that the inputs are between 0 and 1 and that
@@ -95,9 +61,9 @@ invCdf (InvCDF m) x = snd $ m !!! x
 -- | Compute the probabilities from the result distribution
 -- O(n)
 probabilities :: Distribution a -> [(a, Double)]
-probabilities cs
-  = pillars $ fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist cs
-    where n = length $ pillars $ unDist cs
+probabilities dist
+  = toPillars $ fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist dist
+    where n = cFoldl (\acc x -> acc + x) 0 dist
 
 -- | Compute the mean for a non empty list
 -- O(n)

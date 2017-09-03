@@ -12,8 +12,8 @@ import Test.QuickCheck
 import ManAhl.Core.Random
 import Test.ManAhl.QuickCheck (runTest)
 import qualified Test.ManAhl.Core.Analytics as Analytics
-import qualified Test.ManAhl.Core.Random as Random
-import qualified Test.ManAhl.Core.Engine as Engine
+import qualified Test.ManAhl.Core.UniformEngine as Uniform
+import qualified Test.ManAhl.Core.WeightedEngine as WeightedEngine
 import qualified Test.ManAhl.CLI as CLI
 
 -- | Main to run the testsuite, does not stop for failure
@@ -22,8 +22,8 @@ main = do
   success <- forM (
       CLI.tests ++
       Analytics.tests ++
-      Random.tests ++
-      Engine.tests
+      UniformEngine.tests ++
+      WeightedEngine.tests
    ) $ \ (name, test) -> do
            printf "%-35s:" name
            runTest test

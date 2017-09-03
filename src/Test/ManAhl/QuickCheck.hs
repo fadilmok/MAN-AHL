@@ -13,7 +13,7 @@ module Test.ManAhl.QuickCheck(
 ) where
 
 import ManAhl.Core.Types
-import ManAhl.Core.Random
+import ManAhl.Core.UniformEngine
 
 import Control.Exception
 import Control.DeepSeq
@@ -88,7 +88,7 @@ genPdfPillars :: Gen PdfPillars
 genPdfPillars = do
     n <- choose (1, 10) :: Gen Int
     suchThat (
-        snd `liftM`
+        PdfPillars `liftM` snd `liftM`
           foldM (\ (l, xs) _ -> do
               i <- choose (-1000, 1000)
               x <- if l >= 1
@@ -97,6 +97,6 @@ genPdfPillars = do
               return ( x + l, (i, x):xs ) )
           (0, []) [1 .. n]
       )
-      $ \xs -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
+      $ \ (PdfPillars xs) -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
                   in s > 0 && s <= 1
 

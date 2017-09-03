@@ -26,25 +26,25 @@ testQuery = TestPure $ const $ t1 && t2 && t3 && t4 && t5
       t3 = parse ["-rng=Ecuyer","-nSims=1"] ==
                 Just (RunWeightedWith pillarsDefault 1 Ecuyer)
       t4 = parse ["-rng=Ecuyer","-nSims=1","-pillars=[(1,0),(2,1)]"] ==
-                Just (RunWeightedWith [(1, 0), (2, 1)] 1 Ecuyer)
+                Just (RunWeightedWith (PdfPillars [(1, 0), (2, 1)]) 1 Ecuyer)
       t5 = parse ["-rng=Ecuyer","-nSims=1","-run=Uniform"] ==
                 Just (RunUniformWith 1 Ecuyer)
 
 -- | Test a run for a given query
 testRun :: Test
 testRun = TestIO $ do
-  let q1 = RunWeightedWith [(1, 0.5), (2, 0.5)] 1000000 Mersenne
+  let q1 = RunWeightedWith (PdfPillars [(1, 0.5), (2, 0.5)]) 1000000 Mersenne
       q2 = RunUniformWith 1000000 Mersenne
 
   r1' <- run q1
-  let r1 = either (const False) ( \ (ResultWeighted _ r) ->
+  let r1 = either (const False) ( \ (WPStats _ _ (Just r)) ->
           foldl (\ acc (_, x) ->
             if not acc then False
               else round (x * 100) == 50) True r
           ) r1'
 
   r2' <- run q2
-  let r2 = either (const False) (\ (ResultUniform _ r) ->
+  let r2 = either (const False) (\ (UniStats _  _ (Just r)) ->
           foldl (\ acc (_, x) ->
             if not acc then False
               else round (x * 100) ==
