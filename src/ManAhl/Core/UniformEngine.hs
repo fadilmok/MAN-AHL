@@ -2,6 +2,8 @@
 module ManAhl.Core.UniformEngine(
   -- * Creation
   mkUniformRNG,
+  mkUPEngineParams,
+  pillarsUDefault,
   -- * Engines
   ProbaUniEngine(),
   StatUniEngine()
@@ -30,29 +32,41 @@ instance RandomGen UniformRNG where
   split (RandomMersenne rng)    = let (g1, g2) = split rng in
                                    (RandomMersenne g1, RandomMersenne g2)
 
+pillarsUDefault :: [(Double, Double)]
+pillarsUDefault = map (\ x-> (x/100, 1/50)) [0,2..100]
+
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
 mkUniformRNG Ecuyer   = return . RandomEcuyer =<< newStdGen
 mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 
-instance ProbaEngine ProbaUniEngine Double where
+mkUPEngineParams :: [(Double, Double)] -> Either String UEngineParams
+mkUPEngineParams pdfP
+  | null pdfP = Left "The pdf pillars are empty."
+  | any (\(_, x) -> abs( x - snd (head pdfP)) > 0.0001) pdfP =
+        Left "All the pdf probabilities must be equal, as it is uniform"
+  | abs (foldl (\ acc (_, x) -> acc + x) 0 pdfP - 1 ) < 0.0001 =
+        Left "The sum of PDF probabilities are different than 1."
+  | otherwise = Right $ UEngineParams $ fromPillars pdfP
+
+instance ProbaEngine ProbaUniEngine Double UEngineParams where
   computeProba _ r e = evalState (unPUIE e) r
 
   nextNum = state $! randomR (0, 1)
 
-instance StatEngine StatUniEngine Double where
-  computeStats _ r e = let
-      s = evalState (unSUE e) (Stats defaultDist 0 Nothing, r)
-   in s{ hsProba = Just $ probabilities $ hsDistri s }
+instance StatEngine StatUniEngine Double UEngineParams where
+  computeStats p r e = let
+      d = fromRaw $ Map.map (const 0::Double -> Int) $ toRaw $ uepPdf p
+   in statistics (uepPdf p) $
+     evalState (unSUE e) (Stats d 0 Nothing Nothing Nothing Nothing, r)
 
   nextStat = do
-    (Stats cs n _, uniRng) <- get
+    (stats, uniRng) <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
-        !stats = Stats {
-            hsDistri      = increaseCount x cs
-           ,hsTotalCount  = n + 1
-           ,hsProba       = Nothing
+        !stats' = stats {
+            hsDistri = increaseCount x $ hsDistri stats
+           ,hsCount  = hsCount stats + 1
           }
-    put (stats, r)
+    put (stats', r)
     return stats
 

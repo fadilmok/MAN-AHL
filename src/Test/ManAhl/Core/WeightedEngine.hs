@@ -35,7 +35,7 @@ propWeightedProba :: UniformRNGType -> Test
 propWeightedProba rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ forAll genPdfPillars $ \ pdfP ->
-      let e = case mkEngineParams pdfP of
+      let e = case mkWPEngineParams pdfP of
             Left s -> error s; Right x -> x
           stats = computeStats e rng
                     (allStats 1000000 :: StatWPEngine WeightedStats)
@@ -49,10 +49,10 @@ testEngineFail :: Test
 testEngineFail = TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
-      negativePro = isLeft $ mkEngineParams $ PdfPillars [(1, -1)]
-      nullPro = isLeft $ mkEngineParams $ PdfPillars []
-      nullPro2 = isLeft $ mkEngineParams $ PdfPillars [(1,0)]
-      greaterPro = isLeft $ mkEngineParams $
+      negativePro = isLeft $ mkWPEngineParams $ PdfPillars [(1, -1)]
+      nullPro = isLeft $ mkWPEngineParams $ PdfPillars []
+      nullPro2 = isLeft $ mkWPEngineParams $ PdfPillars [(1,0)]
+      greaterPro = isLeft $ mkWPEngineParams $
                       PdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
 
 -- | Test that the performance of the Engine remain acceptable
@@ -61,7 +61,7 @@ propPerf rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ forAll genPdfPillars $ \ pdfP -> monadicIO $
     do
-      let e'= mkEngineParams pdfP
+      let e'= mkWPEngineParams pdfP
           e = case e' of Left s -> error s; Right x -> x
       t <- QC.run $ time $
               computeStats e rng

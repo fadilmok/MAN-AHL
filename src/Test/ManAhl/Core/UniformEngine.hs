@@ -37,7 +37,7 @@ propMeanStd :: UniformRNGType -> Test
 propMeanStd rngT =
   TestQCRng rngT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
-      let vals = computeProba UniformEngineParams rng
+      let vals = computeProba (UEngineParams $ fromPillars pillarsUDefault) rng
                     (nextNums nRand :: ProbaUniEngine [Double])
           m = mean vals
           std = stdDev vals
@@ -51,7 +51,7 @@ propBounds rngT =
   TestQCRng rngT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
       foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True $
-        computeProba UniformEngineParams rng
+        computeProba (UEngineParams $ fromPillars pillarsUDefault) rng
           (nextNums nRand :: ProbaUniEngine [Double])
 
 -- | Test the distribution of the uniform engine is uniform
@@ -59,7 +59,7 @@ propUniform :: UniformRNGType -> Test
 propUniform rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
-      let stats = computeStats UniformEngineParams rng
+      let stats = computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
                     (allStats nRand :: StatUniEngine UniStats)
           (Just proba) = hsProba stats
        in foldl (\ acc (_, x) ->
@@ -75,7 +75,7 @@ propPerf rT =
     Test.runWith 10 $ monadicIO $
   do
     t <- QC.run $ time $
-            computeStats UniformEngineParams rng
+          computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
               (allStats 100000 :: StatUniEngine UniStats)
 
     let res = t < 0.45

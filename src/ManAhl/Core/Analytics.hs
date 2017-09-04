@@ -1,4 +1,4 @@
-{-# LANGUAGE TupleSections, RecordWildCards, FlexibleInstances #-}
+{-# LANGUAGE TupleSections, RecordWildCards, FlexibleInstances, FlexibleContexts #-}
 -- | Module containing simple analytics
 module ManAhl.Core.Analytics(
   -- * Creation
@@ -7,7 +7,7 @@ module ManAhl.Core.Analytics(
   invCdf,(!!!),
   -- * Statistics
   mean, stdDev,
-  probabilities
+  statistics
 ) where
 
 import Data.Function (on)
@@ -58,12 +58,21 @@ mkInvCdf = fromPillars . Prelude.map (\(x, y) -> (y, x)) . toPillars
 invCdf :: InvCDF -> Double -> Maybe Int
 invCdf (InvCDF m) x = snd $ m !!! x
 
--- | Compute the probabilities from the result distribution
+-- | Compute the statistics from the result distribution
 -- O(n)
-probabilities :: Distribution a -> [(a, Double)]
-probabilities dist
-  = toPillars $ fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist dist
-    where n = cFoldl (\acc x -> acc + x) 0 dist
+statistics :: (Ord a, Curve a Double b) => b -> Stats a -> Stats a
+statistics inputPdf s@(Stats dist n _ _ _ _)
+  = s{
+     hsProba = Just $ toPillars resPdf
+     ,hsDiffProba = Just diffP
+     ,hsDiffMean = Just $ mean diffs
+     ,hsDiffStd = Just $ stdDev diffs
+     }
+  where
+    diffs = snd $ unzip diffP
+    resPdf = fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist dist
+    diffP = Map.toList $ Map.unionWith (-) (toRaw inputPdf) $ toRaw resPdf
+
 
 -- | Compute the mean for a non empty list
 -- O(n)

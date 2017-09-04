@@ -15,7 +15,7 @@ module ManAhl.Core.Types(
   Distribution(..),
   UniformRNGType(..),
   UniformRNG(..),
-  EngineParams(..),
+  WEngineParams(..), UEngineParams(..),
   Stats(..), UniStats, WeightedStats,
   Distri(..),
   Curve(..)
@@ -94,12 +94,19 @@ class Distri a where
 -- | Weighted Probability Engine Params
 -- contains the PDF, CDF, inverseCDF
 -- needed to compute the weighted probabilities
-data EngineParams =
-  WeightedEngineParams {
+data WEngineParams =
+  WEngineParams {
     pdf     :: PDF
    ,cdf     :: CDF
    ,iCdf    :: !InvCDF
-  } | UniformEngineParams
+  }
+
+-- | Uniform Probability Engine Params
+-- Used to pick the buckets, the probabilities are flat
+newtype UEngineParams =
+  UEngineParams {
+    uepPdf  :: PieceWiseCurve Double Double
+  }
 
 -- | Statistic of a given Run [a]
 --  hsDistri : represent the distribution of the  elements
@@ -107,16 +114,19 @@ data EngineParams =
 data Stats a =
   Stats {
     hsDistri      :: !(Distribution a)
-   ,hsTotalCount  :: !Int
+   ,hsCount       :: !Int
    ,hsProba       :: Maybe [(a, Double)]
+   ,hsDiffProba   :: Maybe [(a, Double)]
+   ,hsDiffMean    :: Maybe Double
+   ,hsDiffStd     :: Maybe Double
   }
 type UniStats = Stats Double
 type WeightedStats = Stats (Maybe Int)
 
 -- | Class to compute probabilities given an engine.
-class Monad a => ProbaEngine a b | a -> b where
+class Monad a => ProbaEngine a b c | a -> b, a -> c where
   -- | Compute the probabilities
-  computeProba :: EngineParams -> UniformRNG -> a c -> c
+  computeProba :: c -> UniformRNG -> a d -> d
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
@@ -124,9 +134,9 @@ class Monad a => ProbaEngine a b | a -> b where
   nextNums n = replicateM n nextNum
 
 -- | Class to compute the statistics given an egine
-class Monad a => StatEngine a b | a -> b where
+class Monad a => StatEngine a b c | a -> b, a -> c where
   -- | Compute the statistics
-  computeStats :: EngineParams -> UniformRNG -> a (Stats b) -> (Stats b)
+  computeStats :: c -> UniformRNG -> a (Stats b) -> (Stats b)
   -- | Prepare the next Statistic computation
   nextStat :: a (Stats b)
   -- | Compute all the statistic for the n next random numbers
@@ -148,16 +158,16 @@ newtype StatUniEngine a = StatUniEngine {
 
 -- | Weighted Probility Engine
 newtype ProbaWPEngine a = ProbaWPEngine {
-     unPWPE :: ReaderT EngineParams (State UniformRNG) a
+     unPWPE :: ReaderT WEngineParams (State UniformRNG) a
    } deriving (
-      Functor, Applicative, Monad, MonadState UniformRNG, MonadReader EngineParams)
+      Functor, Applicative, Monad, MonadState UniformRNG, MonadReader WEngineParams)
 
 -- | Cumulative Statistic Engine for a Weighted distribution
 newtype StatWPEngine a = StatWPEngine {
-    unSWP :: ReaderT EngineParams (State (WeightedStats, UniformRNG)) a
+    unSWP :: ReaderT WEngineParams (State (WeightedStats, UniformRNG)) a
   } deriving (
       Functor, Applicative, Monad, MonadState (WeightedStats, UniformRNG),
-      MonadReader EngineParams)
+      MonadReader WEngineParams)
 
 -- Instances
 
@@ -202,6 +212,7 @@ instance Distri Double where
   defaultDist = fromPillars $ zip (Prelude.map (/100) [1, 2 .. 100]) [0..]
 
 instance NFData a => NFData (Stats a) where
-  rnf (Stats d t p) = rnf d `seq` rnf t `seq` rnf p
+  rnf (Stats d t p dP dM dS) = rnf d `seq` rnf t `seq` rnf p
+                                `seq` rnf dP `seq` rnf dM `seq` rnf dS
 instance (NFData a, NFData b) => NFData (PieceWiseCurve a b) where
   rnf (PieceWiseCurve c) = rnf c
