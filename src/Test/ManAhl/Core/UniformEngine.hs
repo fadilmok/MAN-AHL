@@ -60,10 +60,10 @@ propUniform rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
       let stats = computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
-                    (allStats nRand :: StatUniEngine UniStats)
+                    (allStats 100000 :: StatUniEngine UniStats)
           (Just diffProba) = hsDiffProba stats
        in foldl (\ acc (_, x) ->
-         if not acc then False else x < 0.001) True diffProba
+         if not acc then False else x < 0.01) True diffProba
 
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable
