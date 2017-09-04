@@ -43,6 +43,10 @@ mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 mkUPEngineParams :: [(Double, Double)] -> Either String UEngineParams
 mkUPEngineParams pdfP
   | null pdfP = Left "The pdf pillars are empty."
+  | foldl (\ acc (x, _) -> if acc then acc else x < 0 || x > 1) False pdfP =
+      Left "PDF Pillars contain negative values or greater than 1."
+  | foldl (\ acc (_, x) -> if acc then acc else x < 0 || x > 1) False pdfP =
+      Left "PDF Pillars contain negative values or greater than 1."
   | any (\(_, x) -> abs( x - snd (head pdfP)) > 0.0001) pdfP =
         Left "All the pdf probabilities must be equal, as it is uniform"
   | abs (foldl (\ acc (_, x) -> acc + x) 0 pdfP - 1 ) > 0.0001 =
