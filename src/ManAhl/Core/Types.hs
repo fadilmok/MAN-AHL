@@ -101,8 +101,14 @@ newtype UEngineParams =
   }
 
 -- | Statistic of a given Run [a]
---  hsDistri : represent the distribution of the  elements
---  hsTotalCount : the total nb of element
+--  hsDistri : represent the distribution of the random numbers
+--  hsCount : the total nb of element
+--  hsProba : the computed PDF from the distribution
+--  hsDiffProba :: the difference between the original and computed PDF
+--  hsDiffMean :: the mean of the differences between PDFs
+--  hsDiffStd :: the standard deviation of the difference between PDFs
+--  hsDiffHi :: the highest differences
+--  hsDiffLow :: the lowest differences
 data Stats a =
   Stats {
     hsDistri      :: !(Distribution a)

@@ -58,8 +58,7 @@ mkInvCdf = fromPillars . Prelude.map (\(x, y) -> (y, x)) . toPillars
 invCdf :: InvCDF -> Double -> Maybe Int
 invCdf (InvCDF m) x = snd $ m !!! x
 
--- | Compute the statistics from the result distribution
--- O(n)
+-- | Compute the statistics from the result distribution and original PDF
 statistics :: (Ord a, Curve a Double b) => b -> Stats a -> Stats a
 statistics inputPdf s@(Stats dist n _ _ _ _ _ _)
   = s{
