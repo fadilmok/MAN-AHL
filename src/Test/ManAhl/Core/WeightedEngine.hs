@@ -39,9 +39,8 @@ propWeightedProba rT =
             Left s -> error s; Right x -> x
           stats = computeStats e rng
                     (allStats 1000000 :: StatWPEngine WeightedStats)
-          pdf' = pdf e
-          (Just proba) = hsProba stats
-       in pdf' == fromPillars proba
+          (Just std) = hsDiffStd stats
+       in std < 0.001
 
 -- | Test that EngineParams fails to build for all
 -- expected cases

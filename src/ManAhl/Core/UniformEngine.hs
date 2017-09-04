@@ -33,7 +33,7 @@ instance RandomGen UniformRNG where
                                    (RandomMersenne g1, RandomMersenne g2)
 
 pillarsUDefault :: [(Double, Double)]
-pillarsUDefault = map (\ x-> (x/100, 1/50)) [2,4..100]
+pillarsUDefault = map (\ x-> (x/100, 1/5)) [20,40..100]
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
@@ -43,6 +43,8 @@ mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 mkUPEngineParams :: [(Double, Double)] -> Either String UEngineParams
 mkUPEngineParams pdfP
   | null pdfP = Left "The pdf pillars are empty."
+  | null $ filter (\(_, x) -> x /= 0) pdfP =
+      Left "The pdf pillars contain only zero."
   | foldl (\ acc (x, _) -> if acc then acc else x < 0 || x > 1) False pdfP =
       Left "PDF Pillars contain negative values or greater than 1."
   | foldl (\ acc (_, x) -> if acc then acc else x < 0 || x > 1) False pdfP =
@@ -51,7 +53,8 @@ mkUPEngineParams pdfP
         Left "All the pdf probabilities must be equal, as it is uniform"
   | abs (foldl (\ acc (_, x) -> acc + x) 0 pdfP - 1 ) > 0.0001 =
         Left "The sum of PDF probabilities are different than 1."
-  | otherwise = Right $ UEngineParams $ fromPillars pdfP
+  | otherwise = Right $ UEngineParams $ fromPillars $
+        filter (\(_, x) -> x /= 0) pdfP
 
 instance ProbaEngine ProbaUniEngine Double UEngineParams where
   computeProba _ r e = evalState (unPUIE e) r

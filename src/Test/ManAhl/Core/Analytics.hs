@@ -57,6 +57,7 @@ tests = map (\(x, y) -> ("Analytics - " ++ x, y))
    ,("Std Failure",                     testStdFail)
    ,("PDF No regression",               testPDFNoRegression)
    ,("InvCDF No regression",            testInvCDFNoRegression)
+   ,("Statistics No regression",        testStatistics)
   ]
 
 -- | Ensure that the last pillars of the CDF is 100%
@@ -157,4 +158,21 @@ testInvCDFNoRegression =
               Right pdf ->
                 mkInvCdf (mkCdf pdf) ==
                   fromPillars [(0.3, Just 1), (0.7, Just 2), (1, Just 3)]
+
+-- | Test the statistics
+testStatistics:: Test
+testStatistics =
+  TestPure $ const $
+    let
+      dist = fromPillars [(Just 1, 10), (Just 2, 10), (Just 3, 80)]
+        :: Distribution (Maybe Int)
+      stats = Stats dist 100 Nothing Nothing
+                  Nothing Nothing Nothing Nothing
+      Stats d n (Just pb) (Just p) (Just m) (Just s) (Just h) (Just l) =
+           statistics pdf stats
+      pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)] :: PDF
+      x ~= y = abs (x - y) < 0.001
+      diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)] :: PDF
+   in m ~= (0.01/3) && h ~= 0.01 && l ~= 0 && s ~= 0.0057
+        && fromPillars pb == pdf && fromPillars p == diff
 

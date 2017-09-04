@@ -9,6 +9,7 @@ import Test.QuickCheck.Monadic as QC
 import Test.ManAhl.QuickCheck as Test
 
 import Control.Monad
+import Data.Either
 import qualified Data.Map as Map
 import Data.Maybe
 import Text.Printf (printf)
@@ -29,6 +30,7 @@ tests = map (\(x, y) -> ("Uniform Engine - " ++ x, y))
    ,("Ecuyer Uniform",        propUniform Ecuyer)
    ,("Mersenee Perf",         propPerf Mersenne)
    ,("Ecuyer Perf",           propPerf Ecuyer)
+   ,("fail",                  testEngineFail)
   ]
 
 -- | Test that the standard deviation and mean of the uniform
@@ -60,10 +62,9 @@ propUniform rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
       let stats = computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
-                    (allStats 100000 :: StatUniEngine UniStats)
-          (Just diffProba) = hsDiffProba stats
-       in foldl (\ acc (_, x) ->
-         if not acc then False else x < 0.01) True diffProba
+                    (allStats 1000000 :: StatUniEngine UniStats)
+          (Just std) = hsDiffStd stats
+       in std < 0.001
 
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable
@@ -80,3 +81,15 @@ propPerf rT =
     unless res $ do
       QC.run $ printf "Time %s: %0.9f sec" (show rT) t
     assert res
+
+-- | Test that EngineParams fails to build for all
+-- expected cases
+testEngineFail :: Test
+testEngineFail = TestPure $ const $
+      negativePro && nullPro && greaterPro && nullPro2
+  where
+      negativePro = isLeft $ mkUPEngineParams [(1, -1)]
+      nullPro = isLeft $ mkUPEngineParams  [(1,0.5), (2,0.3), (3,0.2)]
+      nullPro2 = isLeft $ mkUPEngineParams [(1,0)]
+      greaterPro = isLeft $ mkUPEngineParams $
+                      [(1, 0.4), (2, 0.5), (3, 0.4)]

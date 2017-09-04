@@ -1,0 +1,177 @@
+	Mon Sep  4 16:30 2017 Time and Allocation Profiling Report  (Final)
+
+	   Run +RTS -p -s -RTS
+
+	total time  =        9.77 secs   (9769 ticks @ 1000 us, 1 processor)
+	total alloc = 3,899,276,928 bytes  (excludes profiling overheads)
+
+COST CENTRE        MODULE                     SRC                                           %time %alloc
+
+state              ManAhl.Core.Types          ManAhl/Core/Types.hs:146:42-62                 61.0   50.3
+nextStat           ManAhl.Core.WeightedEngine ManAhl/Core/WeightedEngine.hs:(60,3)-(71,16)   14.4   18.5
+addWith            ManAhl.Core.Types          ManAhl/Core/Types.hs:196:3-67                   5.8    3.3
+next.(...)         ManAhl.Core.UniformEngine  ManAhl/Core/UniformEngine.hs:27:39-55           4.3   11.1
+!!!                ManAhl.Core.Types          ManAhl/Core/Types.hs:(192,3)-(195,44)           3.6    1.0
+next               ManAhl.Core.UniformEngine  ManAhl/Core/UniformEngine.hs:(26,3)-(27,80)     2.8    7.4
+allStats.allStats' ManAhl.Core.Types          ManAhl/Core/Types.hs:(141,7)-(142,60)           2.1    3.9
+nextStat.(...)     ManAhl.Core.WeightedEngine ManAhl/Core/WeightedEngine.hs:(66,9)-(69,11)    1.9    2.5
+addWith            ManAhl.Core.Types          ManAhl/Core/Types.hs:59:23-33                   1.1    0.8
+
+
+                                                                                                                                               individual      inherited
+COST CENTRE                   MODULE                                SRC                                                     no.     entries  %time %alloc   %time %alloc
+
+MAIN                          MAIN                                  <built-in>                                               69          0    0.0    0.0   100.0  100.0
+ CAF                          ManAhl.Run                            <entire-module>                                         137          0    0.0    0.0     0.0    0.0
+  main                        ManAhl.Run                            ManAhl/Run.hs:(15,1)-(41,21)                            138          1    0.0    0.0     0.0    0.0
+ CAF                          ManAhl.CLI                            <entire-module>                                         136          0    0.0    0.0     0.0    0.0
+  show                        ManAhl.CLI                            ManAhl/CLI.hs:(62,3)-(65,27)                            251          0    0.0    0.0     0.0    0.0
+  showRes                     ManAhl.CLI                            ManAhl/CLI.hs:(42,1)-(59,57)                            252          0    0.0    0.0     0.0    0.0
+  showsPrec                   ManAhl.CLI                            ManAhl/CLI.hs:26:13-16                                  148          0    0.0    0.0     0.0    0.0
+ CAF                          ManAhl.Core.Types                     <entire-module>                                         135          0    0.0    0.0     0.0    0.0
+  >>                          ManAhl.Core.Types                     ManAhl/Core/Types.hs:163:29-33                          168          1    0.0    0.0     0.0    0.0
+  >>=                         ManAhl.Core.Types                     ManAhl/Core/Types.hs:163:29-33                          174          1    0.0    0.0     0.0    0.0
+  ask                         ManAhl.Core.Types                     ManAhl/Core/Types.hs:164:7-31                           176          1    0.0    0.0     0.0    0.0
+  emptyCurve                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:59:23-33                           238          1    0.0    0.0     0.0    0.0
+  emptyCurve                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:186:3-39                           209          1    0.0    0.0     0.0    0.0
+  emptyCurve                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:50:23-46                           208          1    0.0    0.0     0.0    0.0
+  fromRaw                     ManAhl.Core.Types                     ManAhl/Core/Types.hs:190:3-26                           183          1    0.0    0.0     0.0    0.0
+  get                         ManAhl.Core.Types                     ManAhl/Core/Types.hs:163:36-73                          212          1    0.0    0.0     0.0    0.0
+  put                         ManAhl.Core.Types                     ManAhl/Core/Types.hs:163:36-73                          244          1    0.0    0.0     0.0    0.0
+  return                      ManAhl.Core.Types                     ManAhl/Core/Types.hs:163:29-33                          245          1    0.0    0.0     0.0    0.0
+  state                       ManAhl.Core.Types                     ManAhl/Core/Types.hs:146:42-62                          217          1    0.0    0.0     0.0    0.0
+  toPillars                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:59:23-33                           262          1    0.0    0.0     0.0    0.0
+  toPillars                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:189:3-32                           185          1    0.0    0.0     0.0    0.0
+  toPillars                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:53:23-46                           184          1    0.0    0.0     0.0    0.0
+  toRaw                       ManAhl.Core.Types                     ManAhl/Core/Types.hs:50:23-46                           196          1    0.0    0.0     0.0    0.0
+  toRaw                       ManAhl.Core.Types                     ManAhl/Core/Types.hs:191:3-15                           187          1    0.0    0.0     0.0    0.0
+  showsPrec                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:40:13-16                           153          0    0.0    0.0     0.0    0.0
+  showsPrec                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:44:13-16                           150          0    0.0    0.0     0.0    0.0
+ CAF                          ManAhl.Core.UniformEngine             <entire-module>                                         134          0    0.0    0.0     0.0    0.0
+  nextNum                     ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:59:3-35                    216          1    0.0    0.0     0.0    0.0
+ CAF                          ManAhl.Core.Analytics                 <entire-module>                                         133          0    0.0    0.0     0.0    0.0
+  mkCdf                       ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(43,1)-(46,43)                 190          1    0.0    0.0     0.0    0.0
+   fromPillars                ManAhl.Core.Types                     ManAhl/Core/Types.hs:53:23-46                           192          1    0.0    0.0     0.0    0.0
+    fromPillars               ManAhl.Core.Types                     ManAhl/Core/Types.hs:188:3-38                           193          1    0.0    0.0     0.0    0.0
+  mkInvCdf                    ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:52:1-68                        177          1    0.0    0.0     0.0    0.0
+   fromPillars                ManAhl.Core.Types                     ManAhl/Core/Types.hs:56:23-46                           179          1    0.0    0.0     0.0    0.0
+    fromPillars               ManAhl.Core.Types                     ManAhl/Core/Types.hs:188:3-38                           180          1    0.0    0.0     0.0    0.0
+ CAF                          ManAhl.Core.WeightedEngine            <entire-module>                                         132          0    0.0    0.0     0.0    0.0
+  nextStat                    ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(60,3)-(71,16)            173          1    0.0    0.0     0.0    0.0
+   nextStat.(...)             ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:63:9-51                   214          0    0.0    0.0     0.0    0.0
+    unPUIE                    ManAhl.Core.Types                     ManAhl/Core/Types.hs:145:45-50                          215          1    0.0    0.0     0.0    0.0
+  pillarsWDefault             ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:23:1-70                   145          1    0.0    0.0     0.0    0.0
+  computeStats                ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(53,3)-(58,38)            237          0    0.0    0.0     0.0    0.0
+ CAF                          System.Random.Mersenne.Pure64         <entire-module>                                         129          0    0.0    0.0     0.0    0.0
+  newPureMT                   System.Random.Mersenne.Pure64         System/Random/Mersenne/Pure64.hs:(67,1)-(71,39)         163          1    0.0    0.0     0.0    0.0
+  pureMT                      System.Random.Mersenne.Pure64         System/Random/Mersenne/Pure64.hs:57:1-44                221          1    0.0    0.0     0.0    0.0
+ CAF                          System.Random.Mersenne.Pure64.Base    <entire-module>                                         128          0    0.0    0.0     0.0    0.0
+  blockLen                    System.Random.Mersenne.Pure64.Base    System/Random/Mersenne/Pure64/Base.hsc:59:1-16          231          1    0.0    0.0     0.0    0.0
+  blockSize                   System.Random.Mersenne.Pure64.Base    System/Random/Mersenne/Pure64/Base.hsc:63:1-18          224          1    0.0    0.0     0.0    0.0
+ CAF                          System.Random.Mersenne.Pure64.MTBlock <entire-module>                                         127          0    0.0    0.0     0.0    0.0
+  mixWord64                   System.Random.Mersenne.Pure64.MTBlock System/Random/Mersenne/Pure64/MTBlock.hs:85:1-24        227          1    0.0    0.0     0.0    0.0
+ CAF                          System.Random                         <entire-module>                                         125          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.Conc.Signal                       <entire-module>                                         119          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.Float                             <entire-module>                                         114          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.IO.Encoding                       <entire-module>                                         112          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.IO.Encoding.Iconv                 <entire-module>                                         110          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.IO.Handle.FD                      <entire-module>                                         102          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.IO.Handle.Text                    <entire-module>                                         100          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.Show                              <entire-module>                                          95          0    0.0    0.0     0.0    0.0
+ CAF                          GHC.Integer.Type                      <entire-module>                                          76          0    0.0    0.0     0.0    0.0
+ main                         ManAhl.Run                            ManAhl/Run.hs:(15,1)-(41,21)                            139          0    0.0    0.0   100.0  100.0
+  parse                       ManAhl.CLI                            ManAhl/CLI.hs:(69,1)-(91,20)                            140          1    0.0    0.0     0.0    0.0
+   parse.getArgs              ManAhl.CLI                            ManAhl/CLI.hs:(82,5)-(87,21)                            141          1    0.0    0.0     0.0    0.0
+   parse.nSims                ManAhl.CLI                            ManAhl/CLI.hs:73:9-69                                   146          1    0.0    0.0     0.0    0.0
+   parse.pillars              ManAhl.CLI                            ManAhl/CLI.hs:72:9-39                                   144          1    0.0    0.0     0.0    0.0
+   parse.rng                  ManAhl.CLI                            ManAhl/CLI.hs:74:9-68                                   152          1    0.0    0.0     0.0    0.0
+   parse.run                  ManAhl.CLI                            ManAhl/CLI.hs:71:9-68                                   143          1    0.0    0.0     0.0    0.0
+  rnf                         ManAhl.CLI                            ManAhl/CLI.hs:(28,3)-(29,48)                            142          1    0.0    0.0     0.0    0.0
+  run                         ManAhl.CLI                            ManAhl/CLI.hs:(95,1)-(111,75)                           154          1    0.0    0.0   100.0  100.0
+   allStats                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:(138,3)-(142,60)                   166          1    0.0    0.0     0.6    1.6
+    allStats.allStats'        ManAhl.Core.Types                     ManAhl/Core/Types.hs:(141,7)-(142,60)                   167    1000000    0.6    1.6     0.6    1.6
+   computeStats               ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(53,3)-(58,38)            169          1    0.0    0.0    99.4   98.3
+    pdf                       ManAhl.Core.Types                     ManAhl/Core/Types.hs:91:5-7                             267          1    0.0    0.0     0.0    0.0
+    statistics                ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(64,1)-(76,74)                 249          1    0.0    0.0     0.0    0.0
+     mean                     ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(82,1)-(83,43)                 268          1    0.0    0.0     0.0    0.0
+     statistics.diffP         ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:76:5-74                        265          1    0.0    0.0     0.0    0.0
+      unPWC                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           266          2    0.0    0.0     0.0    0.0
+     statistics.diffs         ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:74:5-29                        269          1    0.0    0.0     0.0    0.0
+     statistics.resPdf        ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:75:5-72                        256          1    0.0    0.0     0.0    0.0
+      fmap                    ManAhl.Core.Types                     ManAhl/Core/Types.hs:169:3-58                           259          1    0.0    0.0     0.0    0.0
+       statistics.resPdf.\    ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:75:27-57                       260          5    0.0    0.0     0.0    0.0
+      unDist                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:58:41-46                           258          1    0.0    0.0     0.0    0.0
+     stdDev                   ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(88,1)-(91,21)                 270          1    0.0    0.0     0.0    0.0
+      stdDev.\                ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:90:24-34                       271          5    0.0    0.0     0.0    0.0
+      stdDev.avg              ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:91:9-21                        272          1    0.0    0.0     0.0    0.0
+       mean                   ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(82,1)-(83,43)                 273          1    0.0    0.0     0.0    0.0
+     toPillars                ManAhl.Core.Types                     ManAhl/Core/Types.hs:189:3-32                           254          0    0.0    0.0     0.0    0.0
+      unPWC                   ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           255          1    0.0    0.0     0.0    0.0
+    unSWP                     ManAhl.Core.Types                     ManAhl/Core/Types.hs:161:5-9                            170          1    0.0    0.0     0.0    0.0
+    allStats                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:(138,3)-(142,60)                   171          0    0.0    0.0    99.4   98.3
+     allStats.allStats'       ManAhl.Core.Types                     ManAhl/Core/Types.hs:(141,7)-(142,60)                   172          0    1.5    2.3    99.4   98.3
+      nextStat                ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(60,3)-(71,16)            175          0   14.4   18.5    97.9   96.1
+       nextStat.(...)         ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(66,9)-(69,11)            236    1000000    1.9    2.5     8.7    6.6
+        addWith               ManAhl.Core.Types                     ManAhl/Core/Types.hs:59:23-33                           239    1000000    1.1    0.8     6.8    4.2
+         addWith              ManAhl.Core.Types                     ManAhl/Core/Types.hs:196:3-67                           240    1000000    5.8    3.3     5.8    3.3
+          unPWC               ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           241    1000000    0.0    0.0     0.0    0.0
+        hsCount               ManAhl.Core.Types                     ManAhl/Core/Types.hs:109:5-11                           243    1000000    0.0    0.0     0.0    0.0
+        hsDistri              ManAhl.Core.Types                     ManAhl/Core/Types.hs:108:5-12                           242    1000000    0.0    0.0     0.0    0.0
+       nextStat.(...)         ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:64:9-26                   233    1000000    0.4    0.0     4.5    1.0
+        invCdf                ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:59:1-35                        234    1000000    0.5    0.0     4.1    1.0
+         !!!                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:(192,3)-(195,44)                   235    1000000    3.6    1.0     3.6    1.0
+       nextStat.(...)         ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:63:9-51                   213    1000000    0.2    0.0    70.2   70.0
+        nextNum               ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:59:3-35                    218          0    0.5    0.0    70.1   70.0
+         state                ManAhl.Core.Types                     ManAhl/Core/Types.hs:146:42-62                          219          0   61.0   50.3    69.6   70.0
+          next                ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:(26,3)-(27,80)             220    2000000    2.8    7.4     8.4   19.7
+           next.(...)         ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:27:39-55                   226    2000000    4.3   11.1     4.6   12.3
+            lookupBlock       System.Random.Mersenne.Pure64.MTBlock System/Random/Mersenne/Pure64/MTBlock.hs:79:1-61        228    2000000    0.2    0.8     0.2    0.8
+            nextBlock         System.Random.Mersenne.Pure64.MTBlock System/Random/Mersenne/Pure64/MTBlock.hs:(65,1)-(70,14) 248       6409    0.1    0.4     0.1    0.4
+           next.r             ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:27:39-55                   230    2000000    0.0    0.0     0.0    0.0
+           next.x             ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:27:39-55                   225    2000000    0.9    0.0     0.9    0.0
+          genRange            ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:(28,3)-(29,46)             229    1000000    0.3    0.0     0.3    0.0
+       nextStat.x             ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:63:9-51                   232    1000000    0.0    0.0     0.0    0.0
+       nextStat.r             ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:63:9-51                   246     999999    0.0    0.0     0.0    0.0
+   mkUniformRNG               ManAhl.Core.UniformEngine             ManAhl/Core/UniformEngine.hs:(40,1)-(41,61)             162          1    0.0    0.0     0.0    0.0
+    newPureMT                 System.Random.Mersenne.Pure64         System/Random/Mersenne/Pure64.hs:(67,1)-(71,39)         164          0    0.0    0.0     0.0    0.0
+     pureMT                   System.Random.Mersenne.Pure64         System/Random/Mersenne/Pure64.hs:57:1-44                222          0    0.0    0.0     0.0    0.0
+      nextBlock               System.Random.Mersenne.Pure64.MTBlock System/Random/Mersenne/Pure64/MTBlock.hs:(65,1)-(70,14) 247          1    0.0    0.0     0.0    0.0
+      seedBlock               System.Random.Mersenne.Pure64.MTBlock System/Random/Mersenne/Pure64/MTBlock.hs:(55,1)-(60,12) 223          1    0.0    0.0     0.0    0.0
+   run.p                      ManAhl.CLI                            ManAhl/CLI.hs:105:7-37                                  155          1    0.0    0.0     0.0    0.0
+    mkWPEngineParams          ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(29,1)-(37,24)            156          1    0.0    0.0     0.0    0.0
+     mkPdf                    ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(25,1)-(37,55)                 157          1    0.0    0.0     0.0    0.0
+      mkPdf.\                 ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:31:28-34                       160          4    0.0    0.0     0.0    0.0
+      mkPdf.\                 ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:29:28-62                       159          4    0.0    0.0     0.0    0.0
+      add                     ManAhl.Core.Types                     ManAhl/Core/Types.hs:50:23-46                           200          1    0.0    0.0     0.0    0.0
+       add                    ManAhl.Core.Types                     ManAhl/Core/Types.hs:197:3-55                           201          1    0.0    0.0     0.0    0.0
+        unPWC                 ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           202          1    0.0    0.0     0.0    0.0
+      mkPdf.\                 ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:27:31-36                       158          1    0.0    0.0     0.0    0.0
+      mkPdf.m                 ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(34,11)-(35,73)                203          1    0.0    0.0     0.0    0.0
+       mkPdf.m.\              ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:35:13-58                       204          4    0.0    0.0     0.0    0.0
+        addWith               ManAhl.Core.Types                     ManAhl/Core/Types.hs:50:23-46                           205          4    0.0    0.0     0.0    0.0
+         addWith              ManAhl.Core.Types                     ManAhl/Core/Types.hs:196:3-67                           206          4    0.0    0.0     0.0    0.0
+          unPWC               ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           207          4    0.0    0.0     0.0    0.0
+      mkPdf.s                 ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:36:11-48                       198          1    0.0    0.0     0.0    0.0
+       mkPdf.s.\              ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:36:36-42                       199          4    0.0    0.0     0.0    0.0
+     mkWPEngineParams.\       ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:(32,15)-(37,10)           161          1    0.0    0.0     0.0    0.0
+      mkWPEngineParams.\.cdf' ManAhl.Core.WeightedEngine            ManAhl/Core/WeightedEngine.hs:32:19-32                  189          1    0.0    0.0     0.0    0.0
+       mkCdf                  ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(43,1)-(46,43)                 191          0    0.0    0.0     0.0    0.0
+        mkCdf.go              ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:(45,5)-(46,43)                 210          5    0.0    0.0     0.0    0.0
+        unPWC                 ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           197          1    0.0    0.0     0.0    0.0
+        fromPillars           ManAhl.Core.Types                     ManAhl/Core/Types.hs:53:23-46                           194          0    0.0    0.0     0.0    0.0
+         fromPillars          ManAhl.Core.Types                     ManAhl/Core/Types.hs:188:3-38                           195          0    0.0    0.0     0.0    0.0
+      mkInvCdf                ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:52:1-68                        178          0    0.0    0.0     0.0    0.0
+       mkInvCdf.\             ManAhl.Core.Analytics                 ManAhl/Core/Analytics.hs:52:50-55                       211          5    0.0    0.0     0.0    0.0
+       fromPillars            ManAhl.Core.Types                     ManAhl/Core/Types.hs:56:23-46                           181          0    0.0    0.0     0.0    0.0
+        fromPillars           ManAhl.Core.Types                     ManAhl/Core/Types.hs:188:3-38                           182          0    0.0    0.0     0.0    0.0
+       toPillars              ManAhl.Core.Types                     ManAhl/Core/Types.hs:189:3-32                           186          0    0.0    0.0     0.0    0.0
+        unPWC                 ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           188          1    0.0    0.0     0.0    0.0
+  show                        ManAhl.CLI                            ManAhl/CLI.hs:(62,3)-(65,27)                            165          1    0.0    0.0     0.0    0.0
+   showRes                    ManAhl.CLI                            ManAhl/CLI.hs:(42,1)-(59,57)                            250          1    0.0    0.0     0.0    0.0
+    showRes.showList'         ManAhl.CLI                            ManAhl/CLI.hs:59:5-57                                   253          3    0.0    0.0     0.0    0.0
+     showRes.showList'.\      ManAhl.CLI                            ManAhl/CLI.hs:59:33-55                                  261         15    0.0    0.0     0.0    0.0
+    toPillars                 ManAhl.Core.Types                     ManAhl/Core/Types.hs:189:3-32                           263          0    0.0    0.0     0.0    0.0
+     unPWC                    ManAhl.Core.Types                     ManAhl/Core/Types.hs:46:47-51                           264          1    0.0    0.0     0.0    0.0
+  showsPrec                   ManAhl.CLI                            ManAhl/CLI.hs:26:13-16                                  147          1    0.0    0.0     0.0    0.0
+   showsPrec                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:40:13-16                           151          1    0.0    0.0     0.0    0.0
+   showsPrec                  ManAhl.Core.Types                     ManAhl/Core/Types.hs:44:13-16                           149          1    0.0    0.0     0.0    0.0

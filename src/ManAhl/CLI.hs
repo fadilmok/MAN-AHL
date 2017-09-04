@@ -50,10 +50,10 @@ showRes name (Stats dist n (Just proba)
      ++ showList' (toPillars dist)
      ++ ["", "Diff res and input PDFs:"]
      ++ showList' diffProba
-     ++ ["", "Mean of the PDF Diffs: " ++ show diffMean]
-     ++ ["", "StdDev of the PDF Diffs: " ++ show diffStd]
-     ++ ["", "Highest of the PDF Diffs: " ++ show diffHi]
-     ++ ["", "Lowest of the PDF Diffs: " ++ show diffLow]
+     ++ ["", "Mean of the PDF Diffs; " ++ show diffMean]
+     ++ ["StdDev of the PDF Diffs; " ++ show diffStd]
+     ++ ["Highest of the PDF Diffs; " ++ show diffHi]
+     ++ ["Lowest of the PDF Diffs; " ++ show diffLow]
   where
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
