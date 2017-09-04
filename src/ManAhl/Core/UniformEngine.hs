@@ -33,7 +33,7 @@ instance RandomGen UniformRNG where
                                    (RandomMersenne g1, RandomMersenne g2)
 
 pillarsUDefault :: [(Double, Double)]
-pillarsUDefault = tail $ map (\ x-> (x/100, 1/50)) [0,2..100]
+pillarsUDefault = map (\ x-> (x/100, 1/50)) [2,4..100]
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
