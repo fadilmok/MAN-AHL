@@ -61,12 +61,14 @@ invCdf (InvCDF m) x = snd $ m !!! x
 -- | Compute the statistics from the result distribution
 -- O(n)
 statistics :: (Ord a, Curve a Double b) => b -> Stats a -> Stats a
-statistics inputPdf s@(Stats dist n _ _ _ _)
+statistics inputPdf s@(Stats dist n _ _ _ _ _ _)
   = s{
      hsProba = Just $ toPillars resPdf
      ,hsDiffProba = Just diffP
      ,hsDiffMean = Just $ mean diffs
      ,hsDiffStd = Just $ stdDev diffs
+     ,hsDiffHi = Just $ maximum diffs
+     ,hsDiffLow = Just $ minimum diffs
      }
   where
     diffs = snd $ unzip diffP

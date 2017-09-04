@@ -40,7 +40,8 @@ data RunType = Weighted | Uniform
 -- | Helper to display the Results nicely
 showRes :: Show a => String -> Stats a -> String
 showRes name (Stats dist n (Just proba)
-    (Just diffProba) (Just diffMean) (Just diffStd)) = unlines $
+    (Just diffProba) (Just diffMean) (Just diffStd)
+    (Just diffHi) (Just diffLow) ) = unlines $
      [
       "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
      ,"Probabilities:"
@@ -51,6 +52,8 @@ showRes name (Stats dist n (Just proba)
      ++ showList' diffProba
      ++ ["", "Mean of the PDF Diffs: " ++ show diffMean]
      ++ ["", "StdDev of the PDF Diffs: " ++ show diffStd]
+     ++ ["", "Highest of the PDF Diffs: " ++ show diffHi]
+     ++ ["", "Lowest of the PDF Diffs: " ++ show diffLow]
   where
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )

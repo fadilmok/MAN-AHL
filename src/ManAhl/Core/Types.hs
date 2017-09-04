@@ -111,6 +111,8 @@ data Stats a =
    ,hsDiffProba   :: Maybe [(a, Double)]
    ,hsDiffMean    :: Maybe Double
    ,hsDiffStd     :: Maybe Double
+   ,hsDiffHi      :: Maybe Double
+   ,hsDiffLow     :: Maybe Double
   }
 type UniStats = Stats Double
 type WeightedStats = Stats (Maybe Int)
@@ -197,7 +199,8 @@ instance Curve a b (PieceWiseCurve a b) where
   cMap = fmap
 
 instance NFData a => NFData (Stats a) where
-  rnf (Stats d t p dP dM dS) = rnf d `seq` rnf t `seq` rnf p
+  rnf (Stats d t p dP dM dS dH dL) = rnf d `seq` rnf t `seq` rnf p
                                 `seq` rnf dP `seq` rnf dM `seq` rnf dS
+                                  `seq` rnf dH `seq` rnf dL
 instance (NFData a, NFData b) => NFData (PieceWiseCurve a b) where
   rnf (PieceWiseCurve c) = rnf c

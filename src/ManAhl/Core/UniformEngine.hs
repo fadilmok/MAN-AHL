@@ -62,7 +62,8 @@ instance StatEngine StatUniEngine Double UEngineParams where
   computeStats p r e = let
       d = fromRaw $ Map.map (const 0::Double -> Int) $ toRaw $ uepPdf p
    in statistics (uepPdf p) $
-     evalState (unSUE e) (Stats d 0 Nothing Nothing Nothing Nothing, r)
+     evalState (unSUE e)
+        (Stats d 0 Nothing Nothing Nothing Nothing Nothing Nothing, r)
 
   nextStat = do
     (stats, uniRng) <- get

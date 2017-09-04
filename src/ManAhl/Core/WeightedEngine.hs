@@ -53,8 +53,9 @@ instance StatEngine StatWPEngine (Maybe Int) WEngineParams where
   computeStats p uniRng e =
     statistics (pdf p) $
         flip evalState
-          (Stats emptyCurve 0 Nothing Nothing Nothing Nothing, uniRng) $
-            runReaderT (unSWP e) p
+          (Stats emptyCurve 0 Nothing Nothing Nothing Nothing
+              Nothing Nothing, uniRng) $
+                runReaderT (unSWP e) p
 
   nextStat = do
     WEngineParams _ _ iCdf <- ask

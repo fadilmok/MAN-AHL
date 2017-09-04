@@ -40,7 +40,7 @@ testRun = TestIO $ do
 
   r1' <- run q1
   let r1 = either (const False) (
-          \ (ResultWeighted (Stats _ _ (Just r) _ _ _)) ->
+          \ (ResultWeighted (Stats _ _ (Just r) _ _ _ _  _)) ->
             foldl (\ acc (_, x) ->
               if not acc then False
                 else round (x * 100) == 50) True r
@@ -48,7 +48,7 @@ testRun = TestIO $ do
 
   r2' <- run q2
   let r2 = either (const False) (
-          \ (ResultUniform (Stats _  _ (Just r) _ _ _)) ->
+          \ (ResultUniform (Stats _  _ (Just r) _ _ _ _ _)) ->
             foldl (\ acc (_, x) ->
               if not acc then False
                 else round (x * 100) ==
