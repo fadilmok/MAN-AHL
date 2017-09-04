@@ -61,11 +61,9 @@ propUniform rT =
     Test.runWith 10 $ \ (x :: Int) ->
       let stats = computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
                     (allStats nRand :: StatUniEngine UniStats)
-          (Just proba) = hsProba stats
+          (Just diffProba) = hsDiffProba stats
        in foldl (\ acc (_, x) ->
-          if not acc then False
-              else round (x * 100) ==
-                round (100 / fromIntegral (nPillars $ hsDistri stats))) True proba
+         if not acc then False else x < 0.001) True diffProba
 
 -- | Ensure that the performance of the uniform engine
 -- remain acceptable

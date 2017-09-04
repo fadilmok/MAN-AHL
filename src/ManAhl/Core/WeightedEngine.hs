@@ -53,7 +53,7 @@ instance StatEngine StatWPEngine (Maybe Int) WEngineParams where
   computeStats p uniRng e =
     statistics (pdf p) $
         flip evalState
-          (Stats defaultDist 0 Nothing Nothing Nothing Nothing, uniRng) $
+          (Stats emptyCurve 0 Nothing Nothing Nothing Nothing, uniRng) $
             runReaderT (unSWP e) p
 
   nextStat = do
@@ -63,7 +63,7 @@ instance StatEngine StatWPEngine (Maybe Int) WEngineParams where
         !y = invCdf iCdf x
 
         !stats' = stats {
-            hsDistri = increaseCount y $ hsDistri stats
+            hsDistri = addWith (+) y 1  $ hsDistri stats
            ,hsCount  = hsCount stats + 1
           }
     put (stats', r)

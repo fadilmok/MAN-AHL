@@ -17,7 +17,6 @@ module ManAhl.Core.Types(
   UniformRNG(..),
   WEngineParams(..), UEngineParams(..),
   Stats(..), UniStats, WeightedStats,
-  Distri(..),
   Curve(..)
 ) where
 
@@ -83,13 +82,6 @@ class Curve b c a | a -> b, a -> c where
   cFoldl :: (d -> c -> d) -> d -> a -> d
   -- | O(n) appy a function to each pillar
   cMap :: (c -> c) -> a -> a
-
--- | Class to operate a Distribution
-class Distri a where
-  -- | O(log n) add an element
-  increaseCount :: a -> Distribution a -> Distribution a
-  -- | Range used to compute the statistics
-  defaultDist :: Distribution a
 
 -- | Weighted Probability Engine Params
 -- contains the PDF, CDF, inverseCDF
@@ -203,13 +195,6 @@ instance Curve a b (PieceWiseCurve a b) where
   add x y c = PieceWiseCurve $ Map.insert x y $ toRaw c
   cFoldl f x m = Map.foldl f x $ toRaw m
   cMap = fmap
-
-instance Distri (Maybe Int) where
-  increaseCount x = addWith (+) x 1
-  defaultDist = emptyCurve
-instance Distri Double where
-  increaseCount x = addWith (+) (fst $ defaultDist !!! x) 1
-  defaultDist = fromPillars $ zip (Prelude.map (/100) [1, 2 .. 100]) [0..]
 
 instance NFData a => NFData (Stats a) where
   rnf (Stats d t p dP dM dS) = rnf d `seq` rnf t `seq` rnf p

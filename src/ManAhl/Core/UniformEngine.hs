@@ -33,7 +33,7 @@ instance RandomGen UniformRNG where
                                    (RandomMersenne g1, RandomMersenne g2)
 
 pillarsUDefault :: [(Double, Double)]
-pillarsUDefault = map (\ x-> (x/100, 1/50)) [0,2..100]
+pillarsUDefault = tail $ map (\ x-> (x/100, 1/50)) [0,2..100]
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
@@ -45,7 +45,7 @@ mkUPEngineParams pdfP
   | null pdfP = Left "The pdf pillars are empty."
   | any (\(_, x) -> abs( x - snd (head pdfP)) > 0.0001) pdfP =
         Left "All the pdf probabilities must be equal, as it is uniform"
-  | abs (foldl (\ acc (_, x) -> acc + x) 0 pdfP - 1 ) < 0.0001 =
+  | abs (foldl (\ acc (_, x) -> acc + x) 0 pdfP - 1 ) > 0.0001 =
         Left "The sum of PDF probabilities are different than 1."
   | otherwise = Right $ UEngineParams $ fromPillars pdfP
 
@@ -64,7 +64,7 @@ instance StatEngine StatUniEngine Double UEngineParams where
     (stats, uniRng) <- get
     let (!x, !r) = runState (unPUIE nextNum) uniRng
         !stats' = stats {
-            hsDistri = increaseCount x $ hsDistri stats
+            hsDistri = addWith (+) (fst $ (hsDistri stats) !!! x) 1 $ hsDistri stats
            ,hsCount  = hsCount stats + 1
           }
     put (stats', r)

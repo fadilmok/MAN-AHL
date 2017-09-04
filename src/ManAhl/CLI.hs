@@ -14,10 +14,7 @@ import ManAhl.Core.WeightedEngine
 import Control.DeepSeq
 import Data.List
 import Data.Maybe
-import Data.Map (toList)
-
--- | Query to Run from the parsed input,
--- Computing the statistics for :
+import Data.Map (toList) -- | Query to Run from the parsed input, -- Computing the statistics for :
 -- Either a weighted distribution
 -- computed from the pillars for nSims and a selected uniform rng
 -- can be specified as well.
@@ -50,6 +47,10 @@ showRes name (Stats dist n (Just proba)
      ] ++ showList' proba
      ++ ["", "Distribution:"]
      ++ showList' (toPillars dist)
+     ++ ["", "Diff res and input PDFs:"]
+     ++ showList' diffProba
+     ++ ["", "Mean of the PDF Diffs: " ++ show diffMean]
+     ++ ["", "StdDev of the PDF Diffs: " ++ show diffStd]
   where
     showList' :: (Show a, Show b) => [(a, b)] -> [String]
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
