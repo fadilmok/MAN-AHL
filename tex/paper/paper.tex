@@ -501,6 +501,10 @@ These are the unit tests for the Analytics only.
 	\item [PDF and Inverse CDF Non Regression]
 		We ensure without randomness that given a set of pillars,
 		we recover the expected Inverse CDF and PDF.
+	\item [Statistics Non Regression]
+		We ensure without randomness that given a set of pillars,
+		we recover the expected statistics used in the post processing
+		of the Stats engines.
 \end{description}
 \subsection{Uniform Engine Testing} 
 
@@ -528,6 +532,9 @@ These are the unit tests for the bounded uniform pseudo random engine.
 		Ensure that the pseudo random numbers keep at
 		least the same performance.
 		Run 10 times for $100000$ random numbers.
+	\item [Engine Fail]
+		Ensure that the construction of the engine 
+		handles all the expected failure.
 \end{description}
 
 \subsection{Weighted Engine Testing} 
