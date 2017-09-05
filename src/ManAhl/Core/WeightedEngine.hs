@@ -58,10 +58,10 @@ instance StatEngine StatWPEngine (Maybe Int) WEngineParams where
                 runReaderT (unSWP e) p
 
   nextStat = do
-    WEngineParams _ _ iCdf <- ask
+    p <- ask
     (stats, uniRng) <- get
-    let (!x, !r) = runState (unPUIE nextNum) uniRng
-        !y = invCdf iCdf x
+    let (!y, !r) = flip runState uniRng $
+                    runReaderT (unPWPE nextNum) p
 
         !stats' = stats {
             hsDistri = addWith (+) y 1  $ hsDistri stats
