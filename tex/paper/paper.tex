@@ -306,8 +306,6 @@ the context, let it be \emph{Either a b}, \emph{Maybe a} or \emph{error}.
 
 The aim was to keep the software as simple as possible while targeting a
 good design and performance. 
-The right balance is always difficult to achieve as unfortunately no 
-software is ever perfect.
 
 The code is documented while we believe that a simple and well organised
 code needs less documentation. The complexities are presented in the some
@@ -440,7 +438,7 @@ time cabal test --show-details=streaming
 \end{verbatim}
 \begin{figure}[h!]
 \begin{center}
-\includegraphics[width=1\textwidth]{img/tests.png}
+\includegraphics[width=0.7\textwidth]{img/tests.png}
 \caption{Automated Testing}
 \label{fig:tests}
 \end{center}
@@ -746,6 +744,8 @@ Here is a list of possible extension we could add.
 \begin{description}
 	\item [Analytics]
 	Further abstract the PDF, CDF, InvCDF to handle all kind of keys.
+	
+	Review the design of the statistics.
 	\item [Testing]
 	We could run the tests on different environments to ensure the portability of 
 	the code.
