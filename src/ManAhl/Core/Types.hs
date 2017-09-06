@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns, FlexibleInstances,
           GeneralizedNewtypeDeriving, MultiParamTypeClasses,
-          FunctionalDependencies, FlexibleContexts #-}
+          FunctionalDependencies, FlexibleContexts
+          #-}
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
   -- * Engines
@@ -46,17 +47,17 @@ newtype PdfPillars = PdfPillars [(Int, Double)]
 newtype PieceWiseCurve a b = PieceWiseCurve { unPWC :: Map a b }
   deriving Show
 -- | Discrete Probabily Density Function,
-newtype PDF = PDF { unPDF :: PieceWiseCurve (Maybe Int) Double }
-  deriving (Show, Eq, Curve (Maybe Int) Double)
+newtype PDF a = PDF { unPDF :: PieceWiseCurve a Double }
+  deriving (Show, Curve a Double)
 -- | Discrete Cumulative Distribution Function
-newtype CDF = CDF { unCDF :: PieceWiseCurve (Maybe Int) Double}
-  deriving (Show, Eq, Curve (Maybe Int) Double)
+newtype CDF a = CDF { unCDF :: PieceWiseCurve a Double}
+  deriving (Show, Curve a Double)
 -- | Discrete Inverse Cumulative Distribution Function
-newtype InvCDF = InvCDF { unICDF :: PieceWiseCurve Double (Maybe Int) }
-  deriving (Show, Eq, Curve Double (Maybe Int))
+newtype InvCDF a = InvCDF { unICDF :: PieceWiseCurve Double a }
+  deriving (Show, Curve Double a)
 -- | Distribution
 newtype Distribution a = Distribution { unDist :: PieceWiseCurve a Int }
-  deriving (Show, Eq, Curve a Int, NFData)
+  deriving (Show, Curve a Int, NFData)
 
 -- | Operations on a Curve.
 class Curve b c a | a -> b, a -> c where
@@ -88,9 +89,9 @@ class Curve b c a | a -> b, a -> c where
 -- needed to compute the weighted probabilities
 data WEngineParams =
   WEngineParams {
-    pdf     :: PDF
-   ,cdf     :: CDF
-   ,iCdf    :: !InvCDF
+    pdf     :: PDF (Maybe Int)
+   ,cdf     :: CDF (Maybe Int)
+   ,iCdf    :: !(InvCDF (Maybe Int))
   }
 
 -- | Uniform Probability Engine Params
@@ -127,6 +128,7 @@ type WeightedStats = Stats (Maybe Int)
 class Monad a => ProbaEngine a b c | a -> b, a -> c where
   -- | Compute the probabilities
   computeProba :: c -> UniformRNG -> a d -> d
+  computeProba' :: c -> UniformRNG -> a d -> (d, a d)
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
@@ -146,6 +148,31 @@ class Monad a => StatEngine a b c | a -> b, a -> c where
     where
       allStats' 0 acc = acc
       allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
+
+computeStat :: (Ord b, Show b, ProbaEngine a b c) =>
+  a b -> c -> UniformRNG -> Int -> Stats b
+computeStat engine params rng n = -- statistics (emptyCurve) $
+  flip evalState
+    (Stats emptyCurve 0 Nothing Nothing Nothing Nothing Nothing Nothing, engine) $
+      mkStats n
+        where
+--          mkStats :: (Ord b, ProbaEngine a b c) =>
+--            Int -> State (Stats b, a b) (Stats b)
+          mkStats 1 = do
+            (stats, e) <- get
+            let (!y, e') = computeProba' params rng e
+                !stats' = stats {
+                            hsDistri = addWith (+) (fst $ (hsDistri stats) !!! y) 1 $
+                                hsDistri stats
+                           ,hsCount = hsCount stats + 1
+                          }
+            put (stats', e')
+            return stats'
+          mkStats n = allStats' (n - 1) $ mkStats 1
+            where
+              allStats' 0 acc = acc
+              allStats' !n acc = allStats' (n - 1) $ acc >> mkStats 1
+
 
 -- | Bounded Uniform Probability Engine
 newtype ProbaUniEngine a = ProbaUniEngine { unPUIE :: State UniformRNG a }
@@ -173,20 +200,6 @@ newtype StatWPEngine a = StatWPEngine {
 
 instance Functor (PieceWiseCurve a) where
   fmap f (PieceWiseCurve m) = PieceWiseCurve $ Map.map f m
-
-instance {-# OVERLAPS #-} Eq (PieceWiseCurve (Maybe Int) Double) where
-  PieceWiseCurve lhs == PieceWiseCurve rhs =
-    Map.foldl (\acc x -> if not acc then False else x < 0.001) True $
-      Map.unionWith (-) lhs rhs
-
-instance {-# OVERLAPS #-} Eq (PieceWiseCurve Double (Maybe Int)) where
-  PieceWiseCurve lhs == PieceWiseCurve rhs =
-    PieceWiseCurve (transpose lhs) == PieceWiseCurve (transpose rhs)
-      where
-        transpose = Map.fromList . Prelude.map (\(x, y) -> (y, x)) . Map.toList
-
-instance {-# OVERLAPPABLE #-} (Eq a, Eq b) => Eq (PieceWiseCurve a b) where
-  PieceWiseCurve lhs == PieceWiseCurve rhs = lhs == rhs
 
 instance Curve a b (PieceWiseCurve a b) where
   emptyCurve = PieceWiseCurve Map.empty

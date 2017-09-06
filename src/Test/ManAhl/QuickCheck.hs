@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- | Module providing the tool to run the tets
 module Test.ManAhl.QuickCheck(
   -- * Run
@@ -9,7 +10,9 @@ module Test.ManAhl.QuickCheck(
   -- * Generators
   genPdfPillars,
   -- * Type
-  TestSuite, Test(..)
+  TestSuite, Test(..),
+  -- * Eq Curves
+  eq, eq'
 ) where
 
 import ManAhl.Core.Types
@@ -18,6 +21,7 @@ import ManAhl.Core.UniformEngine
 import Control.Exception
 import Control.DeepSeq
 import Control.Monad
+import qualified Data.Map as Map
 import System.CPUTime
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
@@ -100,3 +104,12 @@ genPdfPillars = do
       $ \ (PdfPillars xs) -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
                   in s > 0 && s <= 1
 
+eq :: (Curve (Maybe Int) Double a) => a -> a -> Bool
+eq lhs rhs =
+    Map.foldl (\acc x -> if not acc then False else x < 0.001) True $
+      Map.unionWith (-) (toRaw lhs) (toRaw rhs)
+
+eq' :: (Curve Double (Maybe Int) a) => a -> a -> Bool
+eq' lhs rhs =
+  let transpose = Map.fromList . Prelude.map (\(x, y) -> (y, x)) . Map.toList . toRaw
+  in PieceWiseCurve (transpose lhs) `eq` PieceWiseCurve (transpose rhs)

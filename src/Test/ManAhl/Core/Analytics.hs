@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleInstances #-}
 -- | Module containing the Analytics unit tests
 module Test.ManAhl.Core.Analytics(
   tests
@@ -18,7 +18,7 @@ import Test.QuickCheck
 import Test.ManAhl.QuickCheck
 
 -- Instance to create correct PDFs
-instance Arbitrary PDF where
+instance Arbitrary (PDF (Maybe Int)) where
   arbitrary = do
       pillars <- genPdfPillars
       let pdf = mkPdf pillars
@@ -27,15 +27,15 @@ instance Arbitrary PDF where
         Right p -> p
 
 -- Instance to create correct CDFs
-instance Arbitrary CDF where
+instance Arbitrary (CDF (Maybe Int)) where
   arbitrary = mkCdf `liftM` arbitrary
 
 -- Instance to create correct PDFs
-instance Arbitrary InvCDF where
+instance Arbitrary (InvCDF (Maybe Int))  where
   arbitrary = mkInvCdf `liftM` arbitrary
 
 -- Generatoring input for the inverseCDF testing
-genInvCdfQuery :: Gen (PDF, [Double])
+genInvCdfQuery :: Gen (PDF (Maybe Int), [Double])
 genInvCdfQuery = do
   pdf <- arbitrary
   n <- choose (1, nTests)
@@ -63,7 +63,7 @@ tests = map (\(x, y) -> ("Analytics - " ++ x, y))
 -- | Ensure that the last pillars of the CDF is 100%
 propInvCdfFromPdfComplete :: Test
 propInvCdfFromPdfComplete =
-  TestQC $ run $ \pdf ->
+  TestQC $ run $ \ (pdf :: PDF (Maybe Int)) ->
     let iCdf = mkInvCdf $ mkCdf pdf
         lastP = fst $ last $ toPillars iCdf
      in abs ( lastP - 1) <= 0.0001
@@ -71,7 +71,7 @@ propInvCdfFromPdfComplete =
 -- | Ensure that the PDF and CDF have the correct number of pillars
 propCdfPdfPillars :: Test
 propCdfPdfPillars =
-  TestQC $ run $ \pdf ->
+  TestQC $ run $ \ (pdf :: PDF (Maybe Int)) ->
     let cdfPillars = fst $ unzip $ toPillars $ mkCdf pdf
         pdfPillars = fst $ unzip $ toPillars pdf
         invCdfPillars = snd $ unzip $ toPillars $ mkInvCdf $ mkCdf pdf
@@ -87,19 +87,21 @@ propCdfPdfPillars =
 propPdfStable :: Test
 propPdfStable =
   TestQC $ run $ forAll genPdfPillars $ \ (PdfPillars pdfP) ->
-    mkPdf (PdfPillars pdfP) == mkPdf ( PdfPillars $ reverse $ pdfP )
+    let (Right lhs) = mkPdf (PdfPillars pdfP)
+        (Right rhs) = mkPdf ( PdfPillars $ reverse $ pdfP )
+    in lhs `eq` rhs
 
 -- | Ensure that the pdf probabilities are correct.
 propPdfConsistency :: Test
 propPdfConsistency =
-  TestQC $ run $ \ (pdf :: PDF) ->
+  TestQC $ run $ \ (pdf :: PDF (Maybe Int)) ->
     let s = cFoldl (\acc x -> x + acc) 0 pdf
      in abs (s - 1) <= 0.0001
 
 -- | Ensure that the inverseCdf recovers the correct pdf pillars
 propInvCdfValid :: Test
 propInvCdfValid =
-  TestQC $ run $ forAll genInvCdfQuery $ \(pdf, xs) ->
+  TestQC $ run $ forAll genInvCdfQuery $ \(pdf :: PDF (Maybe Int), xs) ->
     let cdf = mkCdf pdf
         iCdf = mkInvCdf cdf
         set = Set.fromList $ fst $ unzip $ toPillars pdf
@@ -144,7 +146,7 @@ testPDFNoRegression =
       test = case res of
               Left _ -> False
               Right p ->
-                p == (fromPillars [(Just 1, 0.3), (Just 2, 0.4), (Just 3, 0.3)])
+                p `eq` (fromPillars [(Just 1, 0.3), (Just 2, 0.4), (Just 3, 0.3)])
 
 -- | Non regression test for the cdf
 testInvCDFNoRegression :: Test
@@ -156,7 +158,7 @@ testInvCDFNoRegression =
       test = case res of
               Left _ -> False
               Right pdf ->
-                mkInvCdf (mkCdf pdf) ==
+                mkInvCdf (mkCdf pdf) `eq'`
                   fromPillars [(0.3, Just 1), (0.7, Just 2), (1, Just 3)]
 
 -- | Test the statistics
@@ -170,9 +172,9 @@ testStatistics =
                   Nothing Nothing Nothing Nothing
       Stats d n (Just pb) (Just p) (Just m) (Just s) (Just h) (Just l) =
            statistics pdf stats
-      pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)] :: PDF
+      pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)] :: PDF (Maybe Int)
       x ~= y = abs (x - y) < 0.001
-      diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)] :: PDF
+      diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)] :: PDF (Maybe Int)
    in m ~= (0.01/3) && h ~= 0.01 && l ~= 0 && s ~= 0.0057
-        && fromPillars pb == pdf && fromPillars p == diff
+        && fromPillars pb `eq` pdf && fromPillars p `eq` diff
 

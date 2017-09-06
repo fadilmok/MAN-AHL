@@ -21,7 +21,7 @@ import ManAhl.Core.Types
 -- the sum of the probability cannot exceed 1.
 -- The pillars with probability 0 are discarded.
 -- O(n log n)
-mkPdf :: PdfPillars -> Either String PDF
+mkPdf :: PdfPillars -> Either String (PDF (Maybe Int))
 mkPdf (PdfPillars xs)
   | null xs = Left "The pdf pillars are empty."
   | null $ filter (\(_, x) -> x /= 0) xs =
@@ -39,7 +39,7 @@ mkPdf (PdfPillars xs)
 -- | Create a discrete cumulative function,
 -- it assumes the pdf is correct
 -- O(n)
-mkCdf :: PDF -> CDF
+mkCdf :: Ord a => PDF a -> CDF a
 mkCdf = fromPillars . Map.foldlWithKey go [] . toRaw
   where
     go [] x p = [(x, p)]
@@ -48,15 +48,15 @@ mkCdf = fromPillars . Map.foldlWithKey go [] . toRaw
 -- | Create a discrete inverse cumulative function
 -- it assumes the cdf is correct
 -- O(n)
-mkInvCdf :: CDF -> InvCDF
+mkInvCdf :: CDF a -> InvCDF a
 mkInvCdf = fromPillars . Prelude.map (\(x, y) -> (y, x)) . toPillars
 
 -- | Inverse cdf function,
 -- it assumes that the inputs are between 0 and 1 and that
 -- the invCdf is correct, it fails otherwise.
 -- O(log n)
-invCdf :: InvCDF -> Double -> Maybe Int
-invCdf (InvCDF m) x = snd $ m !!! x
+invCdf :: InvCDF a -> Double -> a
+invCdf curve x = snd $ curve !!! x
 
 -- | Compute the statistics from the result distribution and original PDF
 statistics :: (Ord a, Curve a Double b) => b -> Stats a -> Stats a
