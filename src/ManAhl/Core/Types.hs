@@ -8,6 +8,7 @@ module ManAhl.Core.Types(
   ProbaEngine(..),
   ProbaUniEngine(..),
   ProbaWPEngine(..),
+  StatEngine,
   -- * Types
   WPdfPillars(..), UPdfPillars(..),
   CDF(..), PDF(..), InvCDF(..),
@@ -137,7 +138,7 @@ class Monad a => ProbaEngine a b c | a -> b, a -> c where
   -- | Compute the probabilities
   computeProba :: c -> UniformRNG -> a d -> d
   -- | Compute the probabilities and send back the engine
-  evalProba :: c -> UniformRNG -> a d -> (d, a d)
+  runProba :: c -> UniformRNG -> a d -> (d, UniformRNG)
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
@@ -153,6 +154,9 @@ newtype ProbaWPEngine a = ProbaWPEngine {
      unPWPE :: ReaderT WEngineParams (State UniformRNG) a
    } deriving (
       Functor, Applicative, Monad, MonadState UniformRNG, MonadReader WEngineParams)
+
+type StatEngine a b c =
+   ReaderT (a b, c) (State (CollectStats b, UniformRNG)) (CollectStats b)
 
 -- Instances
 

@@ -40,10 +40,10 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) WEngineParams where
     flip evalState uniRng $
       runReaderT (unPWPE e) p
 
-  evalProba p r e =
-    let (x, rng) = flip runState r $
+  runProba p r e =
+    let (!x, !rng) = flip runState r $
                       runReaderT (unPWPE e) p
-    in (x, put rng >> e)
+    in (x, rng)
 
   nextNum = do
     WEngineParams _ _ iCdf <- ask

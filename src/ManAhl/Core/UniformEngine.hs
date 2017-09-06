@@ -59,8 +59,8 @@ instance ProbaEngine ProbaUniEngine Double UEngineParams where
 
   computeProba _ r e = evalState (unPUIE e) r
 
-  evalProba _ r e = let (x, rng) = runState (unPUIE e) r
-                     in (x, put rng >> e)
+  runProba _ r e = let (!x, !rng) = runState (unPUIE e) r
+                    in (x, rng)
 
   nextNum = state $! randomR (0, 1)
 

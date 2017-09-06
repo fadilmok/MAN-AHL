@@ -44,11 +44,11 @@ showRes name (CollectStats dist n,
   FinalStats proba diffProba diffMean diffStd diffHi diffLow) = unlines $
      [
       "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
-     ,"Probabilities:"
+     ,"Output PDF:"
      ] ++ showList' (toPillars proba)
      ++ ["", "Distribution:"]
      ++ showList' (toPillars dist)
-     ++ ["", "Diff res and input PDFs:"]
+     ++ ["", "Diff input and output PDFs:"]
      ++ showList' diffProba
      ++ ["", "Mean of the PDF Diffs; " ++ show diffMean]
      ++ ["StdDev of the PDF Diffs; " ++ show diffStd]
