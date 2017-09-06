@@ -338,6 +338,9 @@ In this section, we introduce the key types used thoughout the application.
 \subsection{General Notes}
 We use efficient data structures as appropriate and we modelise the problem using
 the whole power of Haskell. 
+The types are key, c.f. the code at \autoref{fig:core.types1}, \autoref{fig:core.types2}
+and \autoref{fig:core.types3}.
+
 We use \emph{newtype} as much as possible as it allows design at a 
 seemless cost.
 
@@ -389,6 +392,7 @@ Again, we refer to curve as to piecewise curves or histograms.
 This module contains also the basic statistics we are using to 
 analyse the results.
 
+The relevant code is in \autoref{fig:core.analytics}.
 \subsection{Uniform Engine Module}
 \label{ssec:uniform.impl}
 The \emph{UniformRNG} ADT abstracts a choice of uniform pseudo random 
@@ -405,6 +409,7 @@ This engine instanciates the \emph{ProbaEngine} class, which define
 and abstract the role of a probability engine. The latter is to 
 create one or a series of pseudo random numbers.
 
+The relevant code is in \autoref{fig:core.u}.
 \subsection{Weighted Engine Module}
 \label{ssec:weighted.impl}
 The \emph{ProbaWPEngine} ADT allows to computed weighted pseudo
@@ -417,6 +422,7 @@ using the \emph{Reader} monad. We also use the \emph{State} monad
 to pass on the state of the bounded uniform engine.
 It also instanciates the \emph{ProbaEngine} class.
 
+The relevant code is in \autoref{fig:core.we}.
 \subsection{Statistics Engine Module}
 \label{ssec:stats.impl}
 This \emph{StatEngine} type role is
@@ -432,6 +438,7 @@ uniform random number generator and the cumulative statistics.
 It also use a monad composed of a \emph{Reader} which
 pass one the engine used and the engine parameters. 
 
+The relevant code is in \autoref{fig:core.se}.
 \subsection{CLI Module}
 Using the \emph{Query} ADT we modelise a query from the command line
 dynamically. This latter is processed by the \emph{run} function to 
@@ -442,6 +449,7 @@ requests and to dispatch the query to the appropriate engine. And we merge
 back the result into the \emph{Result} to provide a single function achieving
 everything we need.
 
+The relevant code is in \autoref{fig:core.cli1} and \autoref{fig:core.cli2}.
 \subsection{Testing Module}
 We modelise a \emph{TestSuite} as a list of \emph{Test}.
 Each \emph{Test} can be of different type: QuickCheck type - 
@@ -449,7 +457,7 @@ using a pseudo random data,
 an IO type - an action that need to be run, e.g. performance tests, 
 and a Pure kind of test, for pure computation action.
 
-
+The relevant code is in \autoref{fig:test.qc1} and \autoref{fig:test.qc2}.
 %-------------------------------------------------------------------------------
 \section{Qualitative Analysis}
 \label{sec:quality}
@@ -640,6 +648,9 @@ These are the unit tests for the Analytics only.
 		we recover the expected statistics used in the post processing
 		of the Stats engines.
 \end{description}
+The relevant code is available in \autoref{fig:test.a1}, \autoref{fig:test.a2}
+and \autoref{fig:test.a3}.
+
 \subsection{Uniform Engine Testing} 
 
 These are the unit tests for the bounded uniform pseudo random engine.
@@ -670,7 +681,7 @@ These are the unit tests for the bounded uniform pseudo random engine.
 		Ensure that the construction of the engine 
 		handles all the expected failure.
 \end{description}
-
+The relevant code is in \autoref{fig:test.u1} and \autoref{fig:test.u2}.
 \subsection{Weighted Engine Testing} 
 These are the unit tests for the weighted pseudo random engine.
 All tests are run using the two available uniform pseudo random
@@ -690,7 +701,7 @@ These are like the integration tests as they use most of the library.
 		Ensure that the engine keep at least the same performance.
 		Run 10 times for $100000$ random  numbers	
 \end{description}	
-
+The relevant code is in \autoref{fig:test.w}.
 \subsection{CLI Testing}
 We test that the API produce what is expected.
 \begin{description}
@@ -700,7 +711,7 @@ We test that the API produce what is expected.
 	\item[Run]
 	We test that for given a Query, we produce the expected Result.
 \end{description}
-
+The relevant code is in \autoref{fig:test.cli}.
 %-------------------------------------------------------------------------------
 \section{Performance Analysis}
 \label{sec:perf}
@@ -800,6 +811,8 @@ Here is a list of possible extension we could add.
 	\item [Testing]
 	We could run the tests on different environments to ensure the portability of 
 	the code.
+	
+	We could also automate the performance testing.
 	\item [UI] 
 	A nice extension would be to add a Graphic User Interface,
 	using the library 
@@ -911,5 +924,125 @@ database scheme.
 
 \chapter{Code} \label{apx:code}
 We provide below the code. We use Vim with the extension 
-\href{https://github.com/begriffs/haskell-vim-now}{haskell-vim-now}
+\href{https://github.com/begriffs/haskell-vim-now}{haskell-vim-now}.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-run.png}
+\caption{Code: ManAhl.Run}
+\label{fig:core.run}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-types-1.png}
+\caption{Code: ManAhl.Core.Types - page 1}
+\label{fig:core.types1}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-types-2.png}
+\caption{Code: ManAhl.Core.Types - page 2}
+\label{fig:core.types2}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-types-3.png}
+\caption{Code: ManAhl.Core.Types - page 3}
+\label{fig:core.types3}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-ue.png}
+\caption{Code: ManAhl.Core.UniformEngine}
+\label{fig:core.u}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-we.png}
+\caption{Code: ManAhl.Core.WeightedEngine}
+\label{fig:core.we}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-se.png}
+\caption{Code: ManAhl.Core.StatEngine}
+\label{fig:core.se}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-analytics.png}
+\caption{Code: ManAhl.Core.Analytics}
+\label{fig:core.analytics}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-cli-1.png}
+\caption{Code: ManAhl.CLI - page 1}
+\label{fig:core.cli1}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-cli-2.png}
+\caption{Code: ManAhl.CLI - page 2}
+\label{fig:core.cli2}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-run.png}
+\caption{Code: Test.ManAhl.Run}
+\label{fig:test.run}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-quickcheck-1.png}
+\caption{Code: Test.ManAhl.QuickCheck - page 1}
+\label{fig:test.qc1}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-quickcheck-2.png}
+\caption{Code: Test.ManAhl.QuickCheck - page 2}
+\label{fig:test.qc2}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-uni-1.png}
+\caption{Code: Test.ManAhl.Core.UniformEngine - page 1}
+\label{fig:test.u1}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-uni-2.png}
+\caption{Code: Test.ManAhl.Core.UniformEngine - page 2}
+\label{fig:test.u2}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-w.png}
+\caption{Code: Test.ManAhl.Core.WeightedEngine }
+\label{fig:test.w}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-analytics-1.png}
+\caption{Code: Test.ManAhl.Core.Analytics - page 1}
+\label{fig:test.a1}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-analytics-2.png}
+\caption{Code: Test.ManAhl.Core.Analytics - page 2}
+\label{fig:test.a2}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-analytics-3.png}
+\caption{Code: Test.ManAhl.Core.Analytics - page 3}
+\label{fig:test.a3}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\textwidth]{img/code-test-cli.png}
+\caption{Code: Test.ManAhl.CLI}
+\label{fig:test.cli}
+\end{figure}
 \end{document}
