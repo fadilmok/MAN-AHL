@@ -32,10 +32,10 @@ instance NFData Query where
 instance Show Query where
   show (RunWeightedWith (WPdfPillars xs) n t)
     = "Stats on a Weighted Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
-    ++ "/n Input PDF: " ++ unlines (map show xs)
+    ++ "\nInput PDF: \n" ++ unlines (map show xs)
   show (RunUniformWith (UPdfPillars xs) n t)
     = "Stats on a Uniform Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
-    ++ "/n Input PDF: " ++ unlines (map show xs)
+    ++ "\nInput PDF: \n" ++ unlines (map show xs)
 
 data Result =
       ResultWeighted (CollectStats (Maybe Int), FinalStats (Maybe Int))
