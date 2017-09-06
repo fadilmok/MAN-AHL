@@ -9,7 +9,7 @@ import Test.ManAhl.QuickCheck as Test
 
 import ManAhl.Core.Types
 import ManAhl.Core.WeightedEngine
-import ManAhl.Core.StatsEngine
+import ManAhl.Core.StatEngine
 
 import Control.Monad
 import Data.Either
@@ -62,7 +62,7 @@ propPerf rT =
       t <- QC.run $ time $
               computeStats e rng 100000
                     (nextNum :: ProbaWPEngine (Maybe Int))
-      let res = t < 0.4
+      let res = t < 0.45
       unless res $
         QC.run $ printf "Time %s: %0.9f sec" (show rT) t
       assert res

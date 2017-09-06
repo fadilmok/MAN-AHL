@@ -17,7 +17,7 @@ import Text.Printf (printf)
 import ManAhl.Core.Types
 import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
-import ManAhl.Core.StatsEngine
+import ManAhl.Core.StatEngine
 
 -- | List of tests
 tests :: TestSuite

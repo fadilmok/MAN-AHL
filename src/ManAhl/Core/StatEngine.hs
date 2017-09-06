@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module ManAhl.Core.StatsEngine (
+module ManAhl.Core.StatEngine (
   computeStats
 ) where
 
