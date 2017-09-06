@@ -149,31 +149,6 @@ class Monad a => StatEngine a b c | a -> b, a -> c where
       allStats' 0 acc = acc
       allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
 
-computeStat :: (Ord b, Show b, ProbaEngine a b c) =>
-  a b -> c -> UniformRNG -> Int -> Stats b
-computeStat engine params rng n = -- statistics (emptyCurve) $
-  flip evalState
-    (Stats emptyCurve 0 Nothing Nothing Nothing Nothing Nothing Nothing, engine) $
-      mkStats n
-        where
---          mkStats :: (Ord b, ProbaEngine a b c) =>
---            Int -> State (Stats b, a b) (Stats b)
-          mkStats 1 = do
-            (stats, e) <- get
-            let (!y, e') = computeProba' params rng e
-                !stats' = stats {
-                            hsDistri = addWith (+) (fst $ (hsDistri stats) !!! y) 1 $
-                                hsDistri stats
-                           ,hsCount = hsCount stats + 1
-                          }
-            put (stats', e')
-            return stats'
-          mkStats n = allStats' (n - 1) $ mkStats 1
-            where
-              allStats' 0 acc = acc
-              allStats' !n acc = allStats' (n - 1) $ acc >> mkStats 1
-
-
 -- | Bounded Uniform Probability Engine
 newtype ProbaUniEngine a = ProbaUniEngine { unPUIE :: State UniformRNG a }
   deriving (Functor, Applicative, Monad, MonadState UniformRNG)

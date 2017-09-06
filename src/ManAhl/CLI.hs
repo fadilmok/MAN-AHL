@@ -10,6 +10,7 @@ import ManAhl.Core.Types
 import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
 import ManAhl.Core.WeightedEngine
+import ManAhl.Core.Statistics
 
 import Control.DeepSeq
 import Data.List
