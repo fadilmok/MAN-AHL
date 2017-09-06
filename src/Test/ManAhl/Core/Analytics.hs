@@ -5,6 +5,7 @@ module Test.ManAhl.Core.Analytics(
 ) where
 
 import ManAhl.Core.Analytics
+import ManAhl.Core.WeightedEngine
 import ManAhl.Core.Types
 
 import Control.Exception

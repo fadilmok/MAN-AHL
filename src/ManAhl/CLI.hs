@@ -15,7 +15,8 @@ import ManAhl.Core.StatEngine
 import Control.DeepSeq
 import Data.List
 import Data.Maybe
-import Data.Map (toList) -- | Query to Run from the parsed input, -- Computing the statistics for :
+import Data.Map (toList)
+-- | Query to Run from the parsed input, -- Computing the statistics for :
 -- Either a weighted distribution
 -- computed from the pillars for nSims and a selected uniform rng
 -- can be specified as well.
@@ -31,12 +32,15 @@ instance NFData Query where
 
 instance Show Query where
   show (RunWeightedWith (WPdfPillars xs) n t)
-    = "Stats on a Weighted Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
+    = "Stats on a Weighted Probabilities Run, with "
+    ++ show n ++ " numbers, rng: " ++ show t
     ++ "\nInput PDF: \n" ++ unlines (map show xs)
   show (RunUniformWith (UPdfPillars xs) n t)
-    = "Stats on a Uniform Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
+    = "Stats on a Uniform Probabilities Run, with "
+    ++ show n ++ " numbers, rng: " ++ show t
     ++ "\nInput PDF: \n" ++ unlines (map show xs)
 
+-- | Wrapper for the result type
 data Result =
       ResultWeighted (CollectStats (Maybe Int), FinalStats (Maybe Int))
     | ResultUniform (CollectStats Double, FinalStats Double)
@@ -67,10 +71,8 @@ showRes name (CollectStats dist n,
     showList' = map (\(x, p) -> show x ++ ";" ++ show p )
 
 instance Show Result where
-  show (ResultWeighted stats) =
-    showRes "Weighted" stats
-  show (ResultUniform stats) =
-    showRes "Uniform" stats
+  show (ResultWeighted stats) = showRes "Weighted" stats
+  show (ResultUniform stats)  = showRes "Uniform" stats
 
 -- | Parse the input argument into a query.
 parse :: [String] -> Maybe Query

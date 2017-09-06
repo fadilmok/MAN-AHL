@@ -106,8 +106,8 @@ newtype UEngineParams =
   }
 
 -- | Statistic we collect during the Run [a]
---  hsDistri : represent the distribution of the random numbers
---  hsCount : the total nb of element
+--  csDistri  : represent the distribution of the random numbers
+--  csCount   : the total nb of element
 data CollectStats a =
   CollectStats {
     csDistri      :: !(Distribution a)
@@ -115,16 +115,16 @@ data CollectStats a =
   }
 
 -- | Statistics we compute after the run
---  hsProba : the computed PDF from the distribution
---  hsDiffProba :: the difference between the original and computed PDF
---  hsDiffMean :: the mean of the differences between PDFs
---  hsDiffStd :: the standard deviation of the difference between PDFs
---  hsDiffHi :: the highest differences
---  hsDiffLow :: the lowest differences
+--  fsPDF     : the computed PDF from the distribution
+--  fsDiffPDF : the difference between the original and computed PDF
+--  fsDiffMean: the mean of the differences between PDFs
+--  fsDiffStd : the standard deviation of the difference between PDFs
+--  fsDiffHi  : the highest differences
+--  fsDiffLow : the lowest differences
 data FinalStats a =
   FinalStats {
     fsPDF         :: PDF a
-   ,fsDiffPDF   :: [(a, Double)]
+   ,fsDiffPDF     :: [(a, Double)]
    ,fsDiffMean    :: Double
    ,fsDiffStd     :: Double
    ,fsDiffHi      :: Double
@@ -165,18 +165,18 @@ instance Functor (PieceWiseCurve a) where
 
 instance Curve a b (PieceWiseCurve a b) where
   emptyCurve = PieceWiseCurve Map.empty
-  nPillars = Map.size . toRaw
+  nPillars    = Map.size . toRaw
   fromPillars = fromRaw . Map.fromList
-  toPillars = Map.toList . toRaw
-  fromRaw = PieceWiseCurve
-  toRaw = unPWC
+  toPillars   = Map.toList . toRaw
+  fromRaw     = PieceWiseCurve
+  toRaw       = unPWC
   PieceWiseCurve m !!! x =
     case x `Map.lookupGE` m of
       Just r -> r
       Nothing -> error $ "Fails: " ++ show x
   addWith f x y c = PieceWiseCurve $ Map.insertWith f x y $ toRaw c
-  add x y c = PieceWiseCurve $ Map.insert x y $ toRaw c
-  cFoldl f x m = Map.foldl f x $ toRaw m
+  add x y c       = PieceWiseCurve $ Map.insert x y $ toRaw c
+  cFoldl f x m    = Map.foldl f x $ toRaw m
   cMap = fmap
 
 instance NFData a => NFData (CollectStats a) where
@@ -184,8 +184,7 @@ instance NFData a => NFData (CollectStats a) where
 
 instance NFData a => NFData (FinalStats a) where
   rnf (FinalStats p dP dM dS dH dL) = rnf p
-                                `seq` rnf dP `seq` rnf dM `seq` rnf dS
-                                  `seq` rnf dH `seq` rnf dL
+        `seq` rnf dP `seq` rnf dM `seq` rnf dS `seq` rnf dH `seq` rnf dL
 
 instance (NFData a, NFData b) => NFData (PieceWiseCurve a b) where
   rnf (PieceWiseCurve c) = rnf c
