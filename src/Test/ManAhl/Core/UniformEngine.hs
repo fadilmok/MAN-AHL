@@ -93,6 +93,8 @@ testEngineFail = TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
       negativePro = isLeft $ mkUPEngineParams $ UPdfPillars [(1, -1)]
-      nullPro = isLeft $ mkUPEngineParams $ UPdfPillars [(1,0.5), (2,0.3), (3,0.2)]
+      nullPro = isLeft $ mkUPEngineParams $
+          UPdfPillars [(1,0.5), (2,0.3), (3,0.2)]
       nullPro2 = isLeft $ mkUPEngineParams $ UPdfPillars [(1,0)]
-      greaterPro = isLeft $ mkUPEngineParams $ UPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
+      greaterPro = isLeft $ mkUPEngineParams $
+          UPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]

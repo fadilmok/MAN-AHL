@@ -172,9 +172,11 @@ testStatistics =
       stats = CollectStats dist 100
       (CollectStats d n, FinalStats pb p m s h l) =
            statistics pdf stats
-      pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)] :: PDF (Maybe Int)
+      pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)]
+        :: PDF (Maybe Int)
       x ~= y = abs (x - y) < 0.001
-      diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)] :: PDF (Maybe Int)
+      diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)]
+        :: PDF (Maybe Int)
    in m ~= (0.01/3) && h ~= 0.01 && l ~= 0 && s ~= 0.0057
         && pb `eq` pdf && fromPillars p `eq` diff
 
