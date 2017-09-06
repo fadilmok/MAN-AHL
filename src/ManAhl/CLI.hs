@@ -24,10 +24,18 @@ import Data.Map (toList) -- | Query to Run from the parsed input, -- Computing t
 data Query =
       RunWeightedWith WPdfPillars Int UniformRNGType
     | RunUniformWith UPdfPillars Int UniformRNGType
-  deriving (Show, Eq)
+  deriving (Eq)
 instance NFData Query where
   rnf (RunWeightedWith (WPdfPillars p) n u) = rnf p `seq` rnf n
   rnf (RunUniformWith (UPdfPillars p) n u) = rnf n `seq` rnf p
+
+instance Show Query where
+  show (RunWeightedWith (WPdfPillars xs) n t)
+    = "Stats on a Weighted Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
+    ++ "/n Input PDF: " ++ unlines (map show xs)
+  show (RunUniformWith (UPdfPillars xs) n t)
+    = "Stats on a Uniform Probabilities Run, with " ++ show n ++ " numbers, rng: " ++ show t
+    ++ "/n Input PDF: " ++ unlines (map show xs)
 
 data Result =
       ResultWeighted (CollectStats (Maybe Int), FinalStats (Maybe Int))
