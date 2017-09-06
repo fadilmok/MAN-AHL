@@ -2,7 +2,7 @@
 -- | The weighted proba engine
 module ManAhl.Core.WeightedEngine(
   -- * Creation
-  mkWPEngineParams, mkPdf,
+  mkWPEngineParams, mkWPdf,
   pillarsWDefault,
   -- * Engines
   ProbaWPEngine()
@@ -26,8 +26,8 @@ pillarsWDefault = WPdfPillars [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
 -- the sum of the probability cannot exceed 1.
 -- The pillars with probability 0 are discarded.
 -- O(n log n)
-mkPdf :: WPdfPillars -> Either String (PDF (Maybe Int))
-mkPdf (WPdfPillars xs)
+mkWPdf :: WPdfPillars -> Either String (PDF (Maybe Int))
+mkWPdf (WPdfPillars xs)
   | null xs = Left "The pdf pillars are empty."
   | null $ filter (\(_, x) -> x /= 0) xs =
       Left "The pdf pillars contain only zero."
@@ -53,7 +53,7 @@ mkWPEngineParams pdfP =
             pdf = p
            ,cdf = cdf'
            ,iCdf = mkInvCdf cdf'
-         }) $ mkPdf pdfP
+         }) $ mkWPdf pdfP
 
 instance ProbaEngine ProbaWPEngine (Maybe Int) WEngineParams where
 

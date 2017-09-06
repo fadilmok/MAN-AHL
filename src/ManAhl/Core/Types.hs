@@ -137,7 +137,7 @@ class Monad a => ProbaEngine a b c | a -> b, a -> c where
   getPDF :: a b -> c -> PDF b
   -- | Compute the probabilities
   computeProba :: c -> UniformRNG -> a d -> d
-  -- | Compute the probabilities and send back the engine
+  -- | Compute the probabilities and send back the rng
   runProba :: c -> UniformRNG -> a d -> (d, UniformRNG)
   -- | Prepare the next random number
   nextNum :: a b

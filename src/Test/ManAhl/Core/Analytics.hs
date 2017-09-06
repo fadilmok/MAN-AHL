@@ -22,7 +22,7 @@ import Test.ManAhl.QuickCheck
 instance Arbitrary (PDF (Maybe Int)) where
   arbitrary = do
       pillars <- genPdfPillars
-      let pdf = mkPdf pillars
+      let pdf = mkWPdf pillars
       return $ case pdf of
         Left s -> error $ "Generation failed " ++ s
         Right p -> p
@@ -88,8 +88,8 @@ propCdfPdfPillars =
 propPdfStable :: Test
 propPdfStable =
   TestQC $ run $ forAll genPdfPillars $ \ (WPdfPillars pdfP) ->
-    let (Right lhs) = mkPdf (WPdfPillars pdfP)
-        (Right rhs) = mkPdf (WPdfPillars $ reverse $ pdfP )
+    let (Right lhs) = mkWPdf (WPdfPillars pdfP)
+        (Right rhs) = mkWPdf (WPdfPillars $ reverse $ pdfP )
     in lhs `eq` rhs
 
 -- | Ensure that the pdf probabilities are correct.
@@ -115,10 +115,10 @@ testPdfFail =
   TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
-      negativePro = isLeft $ mkPdf $ WPdfPillars [(1, -1)]
-      nullPro = isLeft $ mkPdf $ WPdfPillars []
-      nullPro2 = isLeft $ mkPdf $ WPdfPillars [(1,0)]
-      greaterPro = isLeft $ mkPdf $ WPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
+      negativePro = isLeft $ mkWPdf $ WPdfPillars [(1, -1)]
+      nullPro = isLeft $ mkWPdf $ WPdfPillars []
+      nullPro2 = isLeft $ mkWPdf $ WPdfPillars [(1,0)]
+      greaterPro = isLeft $ mkWPdf $ WPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
 
 -- | Ensure that inverse CDF fails when expected
 testInvCdfFail :: Test
@@ -143,7 +143,7 @@ testPDFNoRegression =
   TestPure $ const $ test
     where
       pdfP = WPdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
-      res  = mkPdf pdfP
+      res  = mkWPdf pdfP
       test = case res of
               Left _ -> False
               Right p ->
@@ -155,7 +155,7 @@ testInvCDFNoRegression =
   TestPure $ const test
     where
       pdfP = WPdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
-      res  = mkPdf pdfP
+      res  = mkWPdf pdfP
       test = case res of
               Left _ -> False
               Right pdf ->
