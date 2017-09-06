@@ -5,20 +5,20 @@
 -- | Module containing all the key Types
 module ManAhl.Core.Types(
   -- * Engines
-  ProbaEngine(..), StatEngine(..),
+  ProbaEngine(..),
   ProbaUniEngine(..),
-  StatUniEngine(..),
   ProbaWPEngine(..),
-  StatWPEngine(..),
   -- * Types
-  PieceWiseCurve(..), PdfPillars(..),
+  WPdfPillars(..), UPdfPillars(..),
   CDF(..), PDF(..), InvCDF(..),
   Distribution(..),
   UniformRNGType(..),
   UniformRNG(..),
   WEngineParams(..), UEngineParams(..),
-  Stats(..), UniStats, WeightedStats,
-  Curve(..)
+  CollectStats(..),
+  FinalStats(..),
+  Curve(..),
+  PieceWiseCurve(..)
 ) where
 
 import Control.DeepSeq
@@ -41,14 +41,17 @@ data UniformRNGType = Ecuyer | Mersenne
   deriving (Show, Read, Eq)
 
 -- | PDF Pillars
-newtype PdfPillars = PdfPillars [(Int, Double)]
+newtype WPdfPillars = WPdfPillars { unWPP ::  [(Int, Double)] }
   deriving (Show, Eq)
+newtype UPdfPillars = UPdfPillars { unUPP :: [(Double, Double)] }
+  deriving (Show, Eq)
+
 -- | Discrete PieceWise Curve modelised using a TreeMap
 newtype PieceWiseCurve a b = PieceWiseCurve { unPWC :: Map a b }
-  deriving Show
+  deriving (Show )
 -- | Discrete Probabily Density Function,
 newtype PDF a = PDF { unPDF :: PieceWiseCurve a Double }
-  deriving (Show, Curve a Double)
+  deriving (Show, Curve a Double, NFData)
 -- | Discrete Cumulative Distribution Function
 newtype CDF a = CDF { unCDF :: PieceWiseCurve a Double}
   deriving (Show, Curve a Double)
@@ -98,78 +101,58 @@ data WEngineParams =
 -- Used to pick the buckets, the probabilities are flat
 newtype UEngineParams =
   UEngineParams {
-    uepPdf  :: PieceWiseCurve Double Double
+    uepPdf  :: PDF Double
   }
 
--- | Statistic of a given Run [a]
+-- | Statistic we collect during the Run [a]
 --  hsDistri : represent the distribution of the random numbers
 --  hsCount : the total nb of element
+data CollectStats a =
+  CollectStats {
+    csDistri      :: !(Distribution a)
+   ,csCount       :: !Int
+  }
+
+-- | Statistics we compute after the run
 --  hsProba : the computed PDF from the distribution
 --  hsDiffProba :: the difference between the original and computed PDF
 --  hsDiffMean :: the mean of the differences between PDFs
 --  hsDiffStd :: the standard deviation of the difference between PDFs
 --  hsDiffHi :: the highest differences
 --  hsDiffLow :: the lowest differences
-data Stats a =
-  Stats {
-    hsDistri      :: !(Distribution a)
-   ,hsCount       :: !Int
-   ,hsProba       :: Maybe [(a, Double)]
-   ,hsDiffProba   :: Maybe [(a, Double)]
-   ,hsDiffMean    :: Maybe Double
-   ,hsDiffStd     :: Maybe Double
-   ,hsDiffHi      :: Maybe Double
-   ,hsDiffLow     :: Maybe Double
+data FinalStats a =
+  FinalStats {
+    fsPDF         :: PDF a
+   ,fsDiffPDF   :: [(a, Double)]
+   ,fsDiffMean    :: Double
+   ,fsDiffStd     :: Double
+   ,fsDiffHi      :: Double
+   ,fsDiffLow     :: Double
   }
-type UniStats = Stats Double
-type WeightedStats = Stats (Maybe Int)
 
 -- | Class to compute probabilities given an engine.
 class Monad a => ProbaEngine a b c | a -> b, a -> c where
+  -- | get the PDF from the params
+  getPDF :: a b -> c -> PDF b
   -- | Compute the probabilities
   computeProba :: c -> UniformRNG -> a d -> d
-  computeProba' :: c -> UniformRNG -> a d -> (d, a d)
+  -- | Compute the probabilities and send back the engine
+  evalProba :: c -> UniformRNG -> a d -> (d, a d)
   -- | Prepare the next random number
   nextNum :: a b
   -- | Prepare the n next random numbers
   nextNums :: Int -> a [b]
   nextNums n = replicateM n nextNum
 
--- | Class to compute the statistics given an egine
-class Monad a => StatEngine a b c | a -> b, a -> c where
-  -- | Compute the statistics
-  computeStats :: c -> UniformRNG -> a (Stats b) -> (Stats b)
-  -- | Prepare the next Statistic computation
-  nextStat :: a (Stats b)
-  -- | Compute all the statistic for the n next random numbers
-  allStats :: Int -> a (Stats b)
-  allStats 0 = error "You need at least one element"
-  allStats n = allStats' (n - 1) nextStat
-    where
-      allStats' 0 acc = acc
-      allStats' !n acc = allStats' (n - 1) $ acc >> nextStat
-
 -- | Bounded Uniform Probability Engine
 newtype ProbaUniEngine a = ProbaUniEngine { unPUIE :: State UniformRNG a }
   deriving (Functor, Applicative, Monad, MonadState UniformRNG)
-
--- | Cumulative Statistic Engine for a Uniform distribution
-newtype StatUniEngine a = StatUniEngine {
-    unSUE :: State (UniStats, UniformRNG) a  }
-  deriving (Functor, Applicative, Monad, MonadState (UniStats, UniformRNG))
 
 -- | Weighted Probility Engine
 newtype ProbaWPEngine a = ProbaWPEngine {
      unPWPE :: ReaderT WEngineParams (State UniformRNG) a
    } deriving (
       Functor, Applicative, Monad, MonadState UniformRNG, MonadReader WEngineParams)
-
--- | Cumulative Statistic Engine for a Weighted distribution
-newtype StatWPEngine a = StatWPEngine {
-    unSWP :: ReaderT WEngineParams (State (WeightedStats, UniformRNG)) a
-  } deriving (
-      Functor, Applicative, Monad, MonadState (WeightedStats, UniformRNG),
-      MonadReader WEngineParams)
 
 -- Instances
 
@@ -192,9 +175,13 @@ instance Curve a b (PieceWiseCurve a b) where
   cFoldl f x m = Map.foldl f x $ toRaw m
   cMap = fmap
 
-instance NFData a => NFData (Stats a) where
-  rnf (Stats d t p dP dM dS dH dL) = rnf d `seq` rnf t `seq` rnf p
+instance NFData a => NFData (CollectStats a) where
+  rnf (CollectStats d t) = rnf d `seq` rnf t
+
+instance NFData a => NFData (FinalStats a) where
+  rnf (FinalStats p dP dM dS dH dL) = rnf p
                                 `seq` rnf dP `seq` rnf dM `seq` rnf dS
                                   `seq` rnf dH `seq` rnf dL
+
 instance (NFData a, NFData b) => NFData (PieceWiseCurve a b) where
   rnf (PieceWiseCurve c) = rnf c

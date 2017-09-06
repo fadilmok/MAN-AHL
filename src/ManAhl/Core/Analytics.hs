@@ -21,8 +21,8 @@ import ManAhl.Core.Types
 -- the sum of the probability cannot exceed 1.
 -- The pillars with probability 0 are discarded.
 -- O(n log n)
-mkPdf :: PdfPillars -> Either String (PDF (Maybe Int))
-mkPdf (PdfPillars xs)
+mkPdf :: WPdfPillars -> Either String (PDF (Maybe Int))
+mkPdf (WPdfPillars xs)
   | null xs = Left "The pdf pillars are empty."
   | null $ filter (\(_, x) -> x /= 0) xs =
       Left "The pdf pillars contain only zero."
@@ -59,19 +59,19 @@ invCdf :: InvCDF a -> Double -> a
 invCdf curve x = snd $ curve !!! x
 
 -- | Compute the statistics from the result distribution and original PDF
-statistics :: (Ord a, Curve a Double b) => b -> Stats a -> Stats a
-statistics inputPdf s@(Stats dist n _ _ _ _ _ _)
-  = s{
-     hsProba = Just $ toPillars resPdf
-     ,hsDiffProba = Just diffP
-     ,hsDiffMean = Just $ mean diffs
-     ,hsDiffStd = Just $ stdDev diffs
-     ,hsDiffHi = Just $ maximum diffs
-     ,hsDiffLow = Just $ minimum diffs
-     }
+statistics :: (Ord a) => PDF a -> CollectStats a -> (CollectStats a, FinalStats a)
+statistics inputPdf s@(CollectStats dist n)
+  = (s, FinalStats {
+      fsPDF     = resPdf
+     ,fsDiffPDF = diffP
+     ,fsDiffMean = mean diffs
+     ,fsDiffStd = stdDev diffs
+     ,fsDiffHi  = maximum diffs
+     ,fsDiffLow = minimum diffs
+     })
   where
     diffs = snd $ unzip diffP
-    resPdf = fmap (\ x -> fromIntegral x / fromIntegral n) $ unDist dist
+    resPdf = fromRaw $ Map.map (\ x -> fromIntegral x / fromIntegral n) $ toRaw dist
     diffP = Map.toList $ Map.unionWith (-) (toRaw inputPdf) $ toRaw resPdf
 
 

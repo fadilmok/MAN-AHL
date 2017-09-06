@@ -10,7 +10,7 @@ import ManAhl.Core.Types
 import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
 import ManAhl.Core.WeightedEngine
-import ManAhl.Core.Statistics
+import ManAhl.Core.StatsEngine
 
 import Control.DeepSeq
 import Data.List
@@ -22,16 +22,16 @@ import Data.Map (toList) -- | Query to Run from the parsed input, -- Computing t
 -- Or a bounded uniform distribution given nSims and
 -- a selected uniform rng
 data Query =
-      RunWeightedWith PdfPillars Int UniformRNGType
-    | RunUniformWith [(Double, Double)] Int UniformRNGType
+      RunWeightedWith WPdfPillars Int UniformRNGType
+    | RunUniformWith UPdfPillars Int UniformRNGType
   deriving (Show, Eq)
 instance NFData Query where
-  rnf (RunWeightedWith (PdfPillars p) n u) = rnf p `seq` rnf n
-  rnf (RunUniformWith p n u) = rnf n `seq` rnf p
+  rnf (RunWeightedWith (WPdfPillars p) n u) = rnf p `seq` rnf n
+  rnf (RunUniformWith (UPdfPillars p) n u) = rnf n `seq` rnf p
 
 data Result =
-      ResultWeighted WeightedStats
-    | ResultUniform UniStats
+      ResultWeighted (CollectStats (Maybe Int), FinalStats (Maybe Int))
+    | ResultUniform (CollectStats Double, FinalStats Double)
 
 -- | The run type using either the weighted probability or
 -- uniform probability engine
@@ -39,14 +39,13 @@ data RunType = Weighted | Uniform
   deriving (Show, Read)
 
 -- | Helper to display the Results nicely
-showRes :: Show a => String -> Stats a -> String
-showRes name (Stats dist n (Just proba)
-    (Just diffProba) (Just diffMean) (Just diffStd)
-    (Just diffHi) (Just diffLow) ) = unlines $
+showRes :: Show a => String -> (CollectStats a, FinalStats a) -> String
+showRes name (CollectStats dist n,
+  FinalStats proba diffProba diffMean diffStd diffHi diffLow) = unlines $
      [
       "Result " ++ name ++ " Random Number Engine, " ++ show n ++ " random numbers."
      ,"Probabilities:"
-     ] ++ showList' proba
+     ] ++ showList' (toPillars proba)
      ++ ["", "Distribution:"]
      ++ showList' (toPillars dist)
      ++ ["", "Diff res and input PDFs:"]
@@ -75,9 +74,9 @@ parse xs = do
         rng     = fromMaybe Mersenne $ fmap read $ lookup "rng" args
     return $ case run of
       Weighted -> RunWeightedWith
-            (maybe pillarsWDefault PdfPillars $ fmap read pillars) nSims rng
+            (maybe pillarsWDefault WPdfPillars $ fmap read pillars) nSims rng
       Uniform -> RunUniformWith
-            (fromMaybe pillarsUDefault $ fmap read pillars) nSims rng
+            (maybe pillarsUDefault UPdfPillars $ fmap read pillars) nSims rng
   where
     getArgs :: Maybe [(String, String)]
     getArgs = do
@@ -100,8 +99,8 @@ run (RunUniformWith pdfPillars nSims rngT) = do
     Right e -> do
       rng <- mkUniformRNG rngT
       return $ Right $ ResultUniform $
-          computeStats e rng
-            (allStats nSims :: StatUniEngine UniStats)
+        computeStats e rng nSims
+            (nextNum :: ProbaUniEngine Double)
 run (RunWeightedWith pdfPillars nSims rngT) = do
   let p = mkWPEngineParams pdfPillars
   case p of
@@ -109,7 +108,8 @@ run (RunWeightedWith pdfPillars nSims rngT) = do
     Right e -> do
       rng <- mkUniformRNG rngT
       return $ Right $ ResultWeighted $
-          computeStats e rng (allStats nSims :: StatWPEngine WeightedStats)
+        computeStats e rng nSims
+          (nextNum :: ProbaWPEngine (Maybe Int))
 
 -- | Give the CLI help
 help :: [(String, String)]

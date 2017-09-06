@@ -17,6 +17,7 @@ import Text.Printf (printf)
 import ManAhl.Core.Types
 import ManAhl.Core.UniformEngine
 import ManAhl.Core.Analytics
+import ManAhl.Core.StatsEngine
 
 -- | List of tests
 tests :: TestSuite
@@ -33,13 +34,16 @@ tests = map (\(x, y) -> ("Uniform Engine - " ++ x, y))
    ,("fail",                  testEngineFail)
   ]
 
+defParams :: UEngineParams
+defParams = UEngineParams $ fromPillars $ unUPP $ pillarsUDefault
+
 -- | Test that the standard deviation and mean of the uniform
 -- engine is constant.
 propMeanStd :: UniformRNGType -> Test
 propMeanStd rngT =
   TestQCRng rngT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
-      let vals = computeProba (UEngineParams $ fromPillars pillarsUDefault) rng
+      let vals = computeProba defParams rng
                     (nextNums nRand :: ProbaUniEngine [Double])
           m = mean vals
           std = stdDev vals
@@ -53,7 +57,7 @@ propBounds rngT =
   TestQCRng rngT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
       foldl (\ acc x -> if not acc then False else  x >= 0 && x <= 1) True $
-        computeProba (UEngineParams $ fromPillars pillarsUDefault) rng
+        computeProba defParams rng
           (nextNums nRand :: ProbaUniEngine [Double])
 
 -- | Test the distribution of the uniform engine is uniform
@@ -61,9 +65,9 @@ propUniform :: UniformRNGType -> Test
 propUniform rT =
   TestQCRng rT $ \ rng ->
     Test.runWith 10 $ \ (x :: Int) ->
-      let stats = computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
-                    (allStats 1000000 :: StatUniEngine UniStats)
-          (Just std) = hsDiffStd stats
+      let stats = computeStats defParams rng
+                      1000000 (nextNum :: ProbaUniEngine Double)
+          std = fsDiffStd $ snd stats
        in std < 0.001
 
 -- | Ensure that the performance of the uniform engine
@@ -74,8 +78,8 @@ propPerf rT =
     Test.runWith 10 $ monadicIO $
   do
     t <- QC.run $ time $
-          computeStats (UEngineParams $ fromPillars pillarsUDefault) rng
-              (allStats 100000 :: StatUniEngine UniStats)
+      computeStats defParams rng
+              100000 (nextNum :: ProbaUniEngine Double)
 
     let res = t < 0.45
     unless res $ do
@@ -88,8 +92,7 @@ testEngineFail :: Test
 testEngineFail = TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
-      negativePro = isLeft $ mkUPEngineParams [(1, -1)]
-      nullPro = isLeft $ mkUPEngineParams  [(1,0.5), (2,0.3), (3,0.2)]
-      nullPro2 = isLeft $ mkUPEngineParams [(1,0)]
-      greaterPro = isLeft $ mkUPEngineParams $
-                      [(1, 0.4), (2, 0.5), (3, 0.4)]
+      negativePro = isLeft $ mkUPEngineParams $ UPdfPillars [(1, -1)]
+      nullPro = isLeft $ mkUPEngineParams $ UPdfPillars [(1,0.5), (2,0.3), (3,0.2)]
+      nullPro2 = isLeft $ mkUPEngineParams $ UPdfPillars [(1,0)]
+      greaterPro = isLeft $ mkUPEngineParams $ UPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]

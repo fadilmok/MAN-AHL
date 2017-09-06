@@ -86,9 +86,9 @@ propCdfPdfPillars =
 -- | Ensure that the pdf construction is stable
 propPdfStable :: Test
 propPdfStable =
-  TestQC $ run $ forAll genPdfPillars $ \ (PdfPillars pdfP) ->
-    let (Right lhs) = mkPdf (PdfPillars pdfP)
-        (Right rhs) = mkPdf ( PdfPillars $ reverse $ pdfP )
+  TestQC $ run $ forAll genPdfPillars $ \ (WPdfPillars pdfP) ->
+    let (Right lhs) = mkPdf (WPdfPillars pdfP)
+        (Right rhs) = mkPdf (WPdfPillars $ reverse $ pdfP )
     in lhs `eq` rhs
 
 -- | Ensure that the pdf probabilities are correct.
@@ -114,10 +114,10 @@ testPdfFail =
   TestPure $ const $
       negativePro && nullPro && greaterPro && nullPro2
   where
-      negativePro = isLeft $ mkPdf $ PdfPillars [(1, -1)]
-      nullPro = isLeft $ mkPdf $ PdfPillars []
-      nullPro2 = isLeft $ mkPdf $ PdfPillars [(1,0)]
-      greaterPro = isLeft $ mkPdf $ PdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
+      negativePro = isLeft $ mkPdf $ WPdfPillars [(1, -1)]
+      nullPro = isLeft $ mkPdf $ WPdfPillars []
+      nullPro2 = isLeft $ mkPdf $ WPdfPillars [(1,0)]
+      greaterPro = isLeft $ mkPdf $ WPdfPillars [(1, 0.4), (2, 0.5), (3, 0.4)]
 
 -- | Ensure that inverse CDF fails when expected
 testInvCdfFail :: Test
@@ -141,7 +141,7 @@ testPDFNoRegression :: Test
 testPDFNoRegression =
   TestPure $ const $ test
     where
-      pdfP = PdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      pdfP = WPdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
       res  = mkPdf pdfP
       test = case res of
               Left _ -> False
@@ -153,7 +153,7 @@ testInvCDFNoRegression :: Test
 testInvCDFNoRegression =
   TestPure $ const test
     where
-      pdfP = PdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
+      pdfP = WPdfPillars [(1, 0.2), (1, 0.1), (2, 0.4), (3, 0.3),(4, 0)]
       res  = mkPdf pdfP
       test = case res of
               Left _ -> False
@@ -168,13 +168,12 @@ testStatistics =
     let
       dist = fromPillars [(Just 1, 10), (Just 2, 10), (Just 3, 80)]
         :: Distribution (Maybe Int)
-      stats = Stats dist 100 Nothing Nothing
-                  Nothing Nothing Nothing Nothing
-      Stats d n (Just pb) (Just p) (Just m) (Just s) (Just h) (Just l) =
+      stats = CollectStats dist 100
+      (CollectStats d n, FinalStats pb p m s h l) =
            statistics pdf stats
       pdf = fromPillars [(Just 1, 0.11), (Just 2, 0.1), (Just 3, 0.8)] :: PDF (Maybe Int)
       x ~= y = abs (x - y) < 0.001
       diff = fromPillars [(Just 1, 0.01), (Just 2, 0), (Just 3, 0)] :: PDF (Maybe Int)
    in m ~= (0.01/3) && h ~= 0.01 && l ~= 0 && s ~= 0.0057
-        && fromPillars pb `eq` pdf && fromPillars p `eq` diff
+        && pb `eq` pdf && fromPillars p `eq` diff
 

@@ -88,11 +88,11 @@ time f = do
 
 -- | QuickCheck generator to build pseudo random PDF pillars
 -- We ensure that they are correct pillars.
-genPdfPillars :: Gen PdfPillars
+genPdfPillars :: Gen WPdfPillars
 genPdfPillars = do
     n <- choose (1, 10) :: Gen Int
     suchThat (
-        PdfPillars `liftM` snd `liftM`
+        WPdfPillars `liftM` snd `liftM`
           foldM (\ (l, xs) _ -> do
               i <- choose (-1000, 1000)
               x <- if l >= 1
@@ -101,7 +101,7 @@ genPdfPillars = do
               return ( x + l, (i, x):xs ) )
           (0, []) [1 .. n]
       )
-      $ \ (PdfPillars xs) -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
+      $ \ (WPdfPillars xs) -> let s = foldl (\acc (_, x) -> x + acc) 0 xs
                   in s > 0 && s <= 1
 
 eq :: (Curve (Maybe Int) Double a) => a -> a -> Bool

@@ -5,8 +5,7 @@ module ManAhl.Core.WeightedEngine(
   mkWPEngineParams,
   pillarsWDefault,
   -- * Engines
-  ProbaWPEngine(),
-  StatWPEngine()
+  ProbaWPEngine()
 ) where
 
 import ManAhl.Core.Types
@@ -19,13 +18,13 @@ import Control.Monad.Reader
 import qualified Data.Map as Map
 
 -- | Default pillars if not specified
-pillarsWDefault :: PdfPillars
-pillarsWDefault = PdfPillars [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
+pillarsWDefault :: WPdfPillars
+pillarsWDefault = WPdfPillars [(1, 0.2), (2, 0.3), (3, 0.1), (4, 0.15)]
 
 -- | Create a weighted probability engine parameters
 -- The creation can fail if the pdf pillars are incorrect.
 --
-mkWPEngineParams :: PdfPillars -> Either String WEngineParams
+mkWPEngineParams :: WPdfPillars -> Either String WEngineParams
 mkWPEngineParams pdfP =
   either
       (\ msg -> Left msg)
@@ -41,6 +40,11 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) WEngineParams where
     flip evalState uniRng $
       runReaderT (unPWPE e) p
 
+  evalProba p r e =
+    let (x, rng) = flip runState r $
+                      runReaderT (unPWPE e) p
+    in (x, put rng >> e)
+
   nextNum = do
     WEngineParams _ _ iCdf <- ask
     uniRng <- get
@@ -49,24 +53,5 @@ instance ProbaEngine ProbaWPEngine (Maybe Int) WEngineParams where
     let !y = invCdf iCdf x
     return y
 
-instance StatEngine StatWPEngine (Maybe Int) WEngineParams where
-  computeStats p uniRng e =
-    statistics (pdf p) $
-        flip evalState
-          (Stats emptyCurve 0 Nothing Nothing Nothing Nothing
-              Nothing Nothing, uniRng) $
-                runReaderT (unSWP e) p
-
-  nextStat = do
-    p <- ask
-    (stats, uniRng) <- get
-    let (!y, !r) = flip runState uniRng $
-                    runReaderT (unPWPE nextNum) p
-
-        !stats' = stats {
-            hsDistri = addWith (+) y 1  $ hsDistri stats
-           ,hsCount  = hsCount stats + 1
-          }
-    put (stats', r)
-    return stats
+  getPDF _ p = pdf p
 

@@ -2,11 +2,10 @@
 module ManAhl.Core.UniformEngine(
   -- * Creation
   mkUniformRNG,
-  mkUPEngineParams,
   pillarsUDefault,
   -- * Engines
   ProbaUniEngine(),
-  StatUniEngine()
+  mkUPEngineParams
 ) where
 
 import ManAhl.Core.Types
@@ -32,16 +31,16 @@ instance RandomGen UniformRNG where
   split (RandomMersenne rng)    = let (g1, g2) = split rng in
                                    (RandomMersenne g1, RandomMersenne g2)
 
-pillarsUDefault :: [(Double, Double)]
-pillarsUDefault = map (\ x-> (x/100, 1/5)) [20,40..100]
+pillarsUDefault :: UPdfPillars
+pillarsUDefault = UPdfPillars $ map (\ x-> (x/100, 1/5)) [20,40..100]
 
 -- Create Uniform RNG encapsulating Mersenne or Ecuyer
 mkUniformRNG :: UniformRNGType -> IO UniformRNG
 mkUniformRNG Ecuyer   = return . RandomEcuyer =<< newStdGen
 mkUniformRNG Mersenne = return . RandomMersenne =<< newPureMT
 
-mkUPEngineParams :: [(Double, Double)] -> Either String UEngineParams
-mkUPEngineParams pdfP
+mkUPEngineParams :: UPdfPillars -> Either String UEngineParams
+mkUPEngineParams (UPdfPillars pdfP)
   | null pdfP = Left "The pdf pillars are empty."
   | null $ filter (\(_, x) -> x /= 0) pdfP =
       Left "The pdf pillars contain only zero."
@@ -57,24 +56,12 @@ mkUPEngineParams pdfP
         filter (\(_, x) -> x /= 0) pdfP
 
 instance ProbaEngine ProbaUniEngine Double UEngineParams where
+
   computeProba _ r e = evalState (unPUIE e) r
+
+  evalProba _ r e = let (x, rng) = runState (unPUIE e) r
+                     in (x, put rng >> e)
 
   nextNum = state $! randomR (0, 1)
 
-instance StatEngine StatUniEngine Double UEngineParams where
-  computeStats p r e = let
-      d = fromRaw $ Map.map (const 0::Double -> Int) $ toRaw $ uepPdf p
-   in statistics (uepPdf p) $
-     evalState (unSUE e)
-        (Stats d 0 Nothing Nothing Nothing Nothing Nothing Nothing, r)
-
-  nextStat = do
-    (stats, uniRng) <- get
-    let (!x, !r) = runState (unPUIE nextNum) uniRng
-        !stats' = stats {
-            hsDistri = addWith (+) (fst $ (hsDistri stats) !!! x) 1 $ hsDistri stats
-           ,hsCount  = hsCount stats + 1
-          }
-    put (stats', r)
-    return stats
-
+  getPDF _ (UEngineParams pdf) = pdf
